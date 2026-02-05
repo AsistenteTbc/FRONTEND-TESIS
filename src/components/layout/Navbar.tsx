@@ -3,7 +3,8 @@ import {
   Menu,
   X,
   Activity,
-  Home
+  Home,
+  BarChart2, // <--- IMPORTAMOS EL ÍCONO DE ESTADÍSTICAS
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -15,6 +16,8 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { name: "Inicio", icon: Home, href: "/" },
     { name: "Tuberculosis", icon: Activity, href: "/tuberculosis" },
+    // 👇 --- AGREGAMOS EL LINK AL DASHBOARD --- 👇
+    { name: "Estadísticas", icon: BarChart2, href: "/dashboard" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -38,24 +41,24 @@ export const Navbar: React.FC = () => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
-              
+
               return (
                 <Link
                   key={item.name}
                   to={item.href}
                   className={`flex items-center gap-2 px-3 py-2 mx-0.5 rounded-lg transition-all duration-200 group relative ${
-                    active 
-                      ? "text-blue-400 bg-blue-500/10" 
+                    active
+                      ? "text-blue-400 bg-blue-500/10"
                       : "text-gray-400 hover:text-white hover:bg-gray-800/30"
                   }`}
                 >
-                  <Icon 
+                  <Icon
                     className={`w-4 h-4 transition-transform duration-200 ${
                       active ? "scale-110" : "group-hover:scale-110"
-                    }`} 
+                    }`}
                   />
                   <span className="text-sm font-medium">{item.name}</span>
-                  
+
                   {/* Indicador de ruta activa */}
                   {active && (
                     <div className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-blue-400 rounded-full"></div>
@@ -86,19 +89,21 @@ export const Navbar: React.FC = () => {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
-                
+
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
                     className={`flex items-center gap-3 px-4 py-2.5 transition-all duration-200 ${
-                      active 
-                        ? "text-blue-400 bg-blue-500/10 border-l-2 border-blue-400" 
+                      active
+                        ? "text-blue-400 bg-blue-500/10 border-l-2 border-blue-400"
                         : "text-gray-400 hover:text-white hover:bg-gray-800/30"
                     }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <Icon className={`w-4 h-4 ${active ? "text-blue-400" : ""}`} />
+                    <Icon
+                      className={`w-4 h-4 ${active ? "text-blue-400" : ""}`}
+                    />
                     <span className="text-sm font-medium">{item.name}</span>
                     {active && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400"></div>
@@ -106,7 +111,6 @@ export const Navbar: React.FC = () => {
                   </Link>
                 );
               })}
-              
             </div>
           </div>
         )}

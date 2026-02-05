@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import type { StepComponentProps, ILaboratory } from "../../../types/wizard";
+import React, { useEffect, useState, useRef } from "react";
+import type { StepComponentProps, ILaboratory } from "../../../types/wizard"; // Asegúrate de la ruta correcta
 import { locationsService } from "../../../services/locations.service";
 import { Button } from "../../ui/Button";
 import { LoadingSpinner } from "../../ui/LoadingSpinner";
@@ -44,7 +44,7 @@ const StepResult: React.FC<StepComponentProps> = ({
   };
   const styles = getStyles(stepData.variant);
 
-  // 2. LÓGICA DE FILTRADO (AQUÍ ESTÁ LA SOLUCIÓN)
+  // 2. LÓGICA DE FILTRADO DE CONTENIDO (JSON vs Texto)
   const [displayContent, setDisplayContent] = useState<{
     medical: string;
     logistics: string;
@@ -55,16 +55,9 @@ const StepResult: React.FC<StepComponentProps> = ({
 
   useEffect(() => {
     try {
-      // Intentamos leer el contenido como JSON
       const parsed = JSON.parse(stepData.content || "");
-
-      // Si es un JSON válido con estructura médica/logística
       if (parsed.medical && parsed.logistics) {
-        // Obtenemos el ID de la provincia seleccionada (1 = LP, 2 = SF)
         const provinceId = context.selectedProvinceId;
-
-        // Buscamos el texto específico para esa provincia
-        // Usamos toString() para asegurarnos de que coincida con la clave "1" o "2" del JSON
         const logisticsText = parsed.logistics[provinceId?.toString() || "1"];
 
         setDisplayContent({
@@ -73,12 +66,9 @@ const StepResult: React.FC<StepComponentProps> = ({
             logisticsText || "Consulte a la autoridad sanitaria local.",
         });
       } else {
-        // Si es JSON pero no tiene la estructura esperada (caso raro)
         setDisplayContent({ medical: stepData.content || "", logistics: "" });
       }
     } catch (e) {
-      // Si falla el JSON.parse (es decir, es texto plano antiguo o una pregunta simple)
-      // Mostramos todo el contenido como 'medical' y nada de logística
       setDisplayContent({ medical: stepData.content || "", logistics: "" });
     }
   }, [stepData, context.selectedProvinceId]);
@@ -107,6 +97,62 @@ const StepResult: React.FC<StepComponentProps> = ({
     }
   }, [shouldShowLab, context.selectedCityId]);
 
+  // 4. LÓGICA DE ESTADÍSTICAS (ACTUALIZADA PARA OBTENER NOMBRE REAL DE CIUDAD)
+  const hasLogged = useRef(false);
+
+  useEffect(() => {
+    // Solo registramos si no se ha hecho ya y tenemos datos geográficos
+    if (
+      !hasLogged.current &&
+      context.selectedProvinceId &&
+      context.selectedCityId
+    ) {
+      hasLogged.current = true;
+
+      const logStatistics = async () => {
+        let realCityName = "Desconocida";
+
+        try {
+          // BUSCAMOS EL NOMBRE REAL DE LA CIUDAD
+          // Pedimos la lista de ciudades de esa provincia y buscamos la que coincida con el ID
+          const cities = await locationsService.getCities(
+            context.selectedProvinceId!,
+          );
+          const foundCity = cities.find((c) => c.id === context.selectedCityId);
+
+          if (foundCity) {
+            realCityName = foundCity.name; // Ej: "General Pico"
+          } else {
+            realCityName = `City ID: ${context.selectedCityId}`; // Fallback
+          }
+        } catch (error) {
+          console.error("No se pudo obtener el nombre de la ciudad", error);
+          realCityName = `City ID: ${context.selectedCityId}`;
+        }
+
+        const provinceName =
+          context.selectedProvinceId === 1 ? "La Pampa" : "Santa Fe";
+
+        const payload = {
+          provinceName: provinceName,
+          cityName: realCityName, // <--- AHORA ENVIAMOS EL NOMBRE REAL
+          resultVariant: stepData.variant,
+          resultTitle: stepData.title,
+        };
+
+        console.log("📊 Registrando estadística...", payload);
+
+        fetch("http://localhost:3000/stats/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }).catch((err) => console.error("Error al guardar estadísticas:", err));
+      };
+
+      logStatistics();
+    }
+  }, [context.selectedProvinceId, context.selectedCityId, stepData]);
+
   return (
     <div className="animate-fadeIn text-center">
       <div className="mb-6 flex justify-center">
@@ -119,7 +165,7 @@ const StepResult: React.FC<StepComponentProps> = ({
         {stepData.title}
       </h2>
 
-      {/* PARTE MÉDICA (Común para todos) */}
+      {/* PARTE MÉDICA */}
       <div
         className={`p-6 rounded-xl border shadow-lg mb-6 text-left whitespace-pre-line ${styles.box}`}
       >
@@ -128,8 +174,7 @@ const StepResult: React.FC<StepComponentProps> = ({
         </p>
       </div>
 
-      {/* PARTE LOGÍSTICA (Específica de la Provincia) */}
-      {/* Solo se muestra si existe contenido logístico para esa provincia */}
+      {/* PARTE LOGÍSTICA */}
       {displayContent.logistics && (
         <div className="p-6 rounded-xl border border-blue-500/30 bg-blue-900/10 mb-8 text-left animate-fadeIn">
           <h3 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
@@ -181,4 +226,5 @@ const StepResult: React.FC<StepComponentProps> = ({
     </div>
   );
 };
+
 export default StepResult;
