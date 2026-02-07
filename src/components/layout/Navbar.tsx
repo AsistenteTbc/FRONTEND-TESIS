@@ -16,8 +16,8 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { name: "Inicio", icon: Home, href: "/" },
     { name: "Tuberculosis", icon: Activity, href: "/tuberculosis" },
-    // 👇 --- AGREGAMOS EL LINK AL DASHBOARD --- 👇
     { name: "Estadísticas", icon: BarChart2, href: "/dashboard" },
+    { name: "Admin", icon: Activity, href: "/admin" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

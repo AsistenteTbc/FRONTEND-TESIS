@@ -5,8 +5,8 @@ import {
   Cell,
   BarChart,
   Bar,
-  LineChart, // <--- NUEVO
-  Line, // <--- NUEVO
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -14,8 +14,10 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { LoadingSpinner } from "../components/ui/LoadingSpinner"; // Ajusta ruta si es necesario
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import { ChevronDown, ChevronUp, MapPin, Filter, Calendar } from "lucide-react";
+// Importamos el servicio para buscar las provincias reales
+import { adminService } from "../services/admin.service";
 
 const Dashboard = () => {
   const [stats, setStats] = useState<any>(null);
@@ -26,10 +28,23 @@ const Dashboard = () => {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
+  // Estado para la lista dinámica de provincias
+  const [provincesList, setProvincesList] = useState<any[]>([]);
+
   // Estado del acordeón
   const [expandedProvince, setExpandedProvince] = useState<string | null>(null);
 
-  // Efecto que se dispara cuando cambia CUALQUIER filtro
+  // 1. EFECTO DE CARGA INICIAL (Traer provincias disponibles)
+  useEffect(() => {
+    adminService
+      .getProvinces()
+      .then((data) => setProvincesList(data))
+      .catch((err) =>
+        console.error("Error cargando provincias para filtro:", err),
+      );
+  }, []);
+
+  // 2. EFECTO DE DATOS (Se dispara cuando cambia un filtro)
   useEffect(() => {
     setLoading(true);
 
@@ -62,7 +77,6 @@ const Dashboard = () => {
                 value: Number(item.value),
               }))
             : [],
-          // 👇 PROCESAMOS LA TENDENCIA TEMPORAL
           byTrend: data.byTrend
             ? data.byTrend.map((item: any) => ({
                 ...item,
@@ -128,8 +142,13 @@ const Dashboard = () => {
               className="bg-gray-700 text-white text-sm rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors"
             >
               <option value="TODAS">🇦🇷 Nivel Nacional</option>
-              <option value="La Pampa">La Pampa</option>
-              <option value="Santa Fe">Santa Fe</option>
+
+              {/* 👇 AQUI ESTA LA MAGIA: Mapeamos la lista real de la BD */}
+              {provincesList.map((prov) => (
+                <option key={prov.id} value={prov.name}>
+                  {prov.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -242,7 +261,7 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                    <p>No hay datos para este rango de fechas.</p>
+                    <p>No hay datos para este rango o ubicación.</p>
                   </div>
                 )}
               </div>
@@ -292,7 +311,7 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                    <p>Sin datos de riesgo en este período.</p>
+                    <p>Sin datos de riesgo.</p>
                   </div>
                 )}
               </div>
@@ -320,7 +339,6 @@ const Dashboard = () => {
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(str) => {
-                        // Formato DD/MM
                         const [year, month, day] = str.split("-");
                         return `${day}/${month}`;
                       }}
@@ -353,13 +371,13 @@ const Dashboard = () => {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                  <p>No hay suficientes datos temporales para graficar.</p>
+                  <p>No hay suficientes datos temporales.</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ACORDEÓN DE CIUDADES (SOLO SI ES NACIONAL) */}
+          {/* ACORDEÓN DE CIUDADES */}
           {isNational && (
             <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
               <div className="p-6 border-b border-gray-700">
@@ -438,7 +456,7 @@ const Dashboard = () => {
                   )
                 ) : (
                   <div className="p-6 text-center text-gray-500">
-                    No hay registros detallados para este rango.
+                    No hay registros detallados.
                   </div>
                 )}
               </div>
