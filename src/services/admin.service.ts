@@ -1,151 +1,83 @@
-// Definición de Tipos (Interfaces)
-// Esto ayuda a que el editor te avise si escribes mal una propiedad
-
-export interface IProvince {
-  id: number;
-  name: string;
-}
-
-export interface ICity {
-  id: number;
-  name: string;
-  zipCode: string;
-  provinceId: number; // Para enviar al backend
-  province?: IProvince; // Para mostrar en la tabla (viene del backend)
-}
-
-export interface ILaboratorio {
-  id: number;
-  name: string;
-  address: string;
-  phone: string;
-  horario: string;
-  provinceId: number;
-  province?: IProvince;
-}
-
-const API_URL = "http://localhost:3000/admin";
+import { adminApi } from "./api";
+import type { IProvince, ICity, ILaboratorio } from "../types/admin";
 
 export const adminService = {
-  // =================================================================
-  // 1. PROVINCIAS
-  // =================================================================
+  // PROVINCIAS
 
-  // ASÍ DEBE ESTAR:
   async getProvinces(): Promise<IProvince[]> {
-    // Esto llamará a http://localhost:3000/admin/provinces
-    const response = await fetch(`${API_URL}/provinces`);
-    if (!response.ok) throw new Error("Error al cargar provincias");
-    return await response.json();
+    // Axios automáticamente hace el .json()
+    const { data } = await adminApi.get<IProvince[]>("/provinces");
+    return data;
   },
 
-  async createProvince(data: Partial<IProvince>): Promise<IProvince> {
-    const response = await fetch(`${API_URL}/provinces`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Error al crear provincia");
-    return await response.json();
+  async createProvince(payload: Partial<IProvince>): Promise<IProvince> {
+    const { data } = await adminApi.post<IProvince>("/provinces", payload);
+    return data;
   },
 
   async updateProvince(
     id: number,
-    data: Partial<IProvince>,
+    payload: Partial<IProvince>,
   ): Promise<IProvince> {
-    const response = await fetch(`${API_URL}/provinces/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Error al actualizar provincia");
-    return await response.json();
+    const { data } = await adminApi.put<IProvince>(`/provinces/${id}`, payload);
+    return data;
   },
 
   async deleteProvince(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/provinces/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Error al eliminar provincia");
+    await adminApi.delete(`/provinces/${id}`);
   },
 
-  // =================================================================
-  // 2. CIUDADES
-  // =================================================================
+  // CIUDADES
 
   async getCities(): Promise<ICity[]> {
-    // Esto llamará a http://localhost:3000/admin/cities
-    const response = await fetch(`${API_URL}/cities`);
-    if (!response.ok) throw new Error("Error al cargar ciudades");
-    return await response.json();
+    const { data } = await adminApi.get<ICity[]>("/cities");
+    return data;
   },
 
-  async createCity(data: Partial<ICity>): Promise<ICity> {
-    const response = await fetch(`${API_URL}/cities`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Error al crear ciudad");
-    return await response.json();
+  async createCity(payload: Partial<ICity>): Promise<ICity> {
+    const { data } = await adminApi.post<ICity>("/cities", payload);
+    return data;
   },
 
-  async updateCity(id: number, data: Partial<ICity>): Promise<ICity> {
-    const response = await fetch(`${API_URL}/cities/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Error al actualizar ciudad");
-    return await response.json();
+  async updateCity(id: number, payload: Partial<ICity>): Promise<ICity> {
+    const { data } = await adminApi.put<ICity>(`/cities/${id}`, payload);
+    return data;
   },
 
   async deleteCity(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/cities/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Error al eliminar ciudad");
+    await adminApi.delete(`/cities/${id}`);
   },
 
-  // =================================================================
-  // 3. LABORATORIOS
-  // =================================================================
+  // LABORATORIOS
 
   async getLaboratorios(): Promise<ILaboratorio[]> {
-    // Asumo que la ruta en el controller es 'laboratorios' o 'laboratories'.
-    // Ajusta esto según lo que pusiste en @Controller('admin') -> @Get('laboratorios')
-    const response = await fetch(`${API_URL}/laboratorios`);
-    if (!response.ok) throw new Error("Error al cargar laboratorios");
-    return await response.json();
+    // Nota: Asegúrate que el endpoint en backend sea /admin/laboratorios (no 'laboratories')
+    const { data } = await adminApi.get<ILaboratorio[]>("/laboratorios");
+    return data;
   },
 
-  async createLaboratorio(data: Partial<ILaboratorio>): Promise<ILaboratorio> {
-    const response = await fetch(`${API_URL}/laboratorios`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Error al crear laboratorio");
-    return await response.json();
+  async createLaboratorio(
+    payload: Partial<ILaboratorio>,
+  ): Promise<ILaboratorio> {
+    const { data } = await adminApi.post<ILaboratorio>(
+      "/laboratorios",
+      payload,
+    );
+    return data;
   },
 
   async updateLaboratorio(
     id: number,
-    data: Partial<ILaboratorio>,
+    payload: Partial<ILaboratorio>,
   ): Promise<ILaboratorio> {
-    const response = await fetch(`${API_URL}/laboratorios/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Error al actualizar laboratorio");
-    return await response.json();
+    const { data } = await adminApi.put<ILaboratorio>(
+      `/laboratorios/${id}`,
+      payload,
+    );
+    return data;
   },
 
   async deleteLaboratorio(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/laboratorios/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Error al eliminar laboratorio");
+    await adminApi.delete(`/laboratorios/${id}`);
   },
 };

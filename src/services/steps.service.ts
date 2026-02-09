@@ -6,7 +6,4 @@ export const stepsService = {
     const response = await api.get<IStep>(`steps/${id}`);
     return response.data;
   },
-
-  // Si en el futuro necesitas enviar respuestas al backend:
-  // sendAnswer: async (stepId: number, answer: any) => { ... }
 };

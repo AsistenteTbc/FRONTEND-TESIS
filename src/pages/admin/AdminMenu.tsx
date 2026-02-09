@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Map, Building2, MapPin } from "lucide-react"; // Íconos opcionales para que quede más bonito
 

@@ -1,20 +1,20 @@
 import "./App.css";
 import { Layout } from "./components/layout/Layout";
 import { Routes, Route } from "react-router-dom";
-import WizardContainer from "./pages/WizardContainer";
 import TuberculosisInfo from "./pages/TuberculosisInfo";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/DashboardPage";
 import AdminCities from "./pages/admin/AdminCities";
 import AdminLabs from "./pages/admin/AdminLabs";
 import AdminProvinces from "./pages/admin/AdminProvince";
 import { AdminMenu } from "./pages/admin/AdminMenu";
+import WizardPage from "./pages/WizardPage";
 
 function App() {
   return (
     <>
       <Layout>
         <Routes>
-          <Route path="/" element={<WizardContainer />} />
+          <Route path="/" element={<WizardPage />} />
           <Route path="/tuberculosis" element={<TuberculosisInfo />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin" element={<AdminMenu />}></Route>
