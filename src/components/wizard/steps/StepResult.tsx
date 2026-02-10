@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import type { StepComponentProps, ILaboratory } from "../../../types/wizard"; // Asegúrate de la ruta correcta
+import type { StepComponentProps, ILaboratory } from "../../../types/wizard";
 import { locationsService } from "../../../services/locations.service";
+import { statsService } from "../../../services/stats.service"; // <--- IMPORTAMOS STATS SERVICE
 import { Button } from "../../ui/Button";
 import { LoadingSpinner } from "../../ui/LoadingSpinner";
 
@@ -44,14 +45,11 @@ const StepResult: React.FC<StepComponentProps> = ({
   };
   const styles = getStyles(stepData.variant);
 
-  // 2. LÓGICA DE FILTRADO DE CONTENIDO (JSON vs Texto)
+  // 2. LÓGICA DE FILTRADO DE CONTENIDO
   const [displayContent, setDisplayContent] = useState<{
     medical: string;
     logistics: string;
-  }>({
-    medical: "",
-    logistics: "",
-  });
+  }>({ medical: "", logistics: "" });
 
   useEffect(() => {
     try {
@@ -73,7 +71,7 @@ const StepResult: React.FC<StepComponentProps> = ({
     }
   }, [stepData, context.selectedProvinceId]);
 
-  // 3. LÓGICA DE LABORATORIO
+  // 3. LÓGICA DE LABORATORIO (ASSIGNED LAB)
   const shouldShowLab = !!context.selectedCityId;
   const [lab, setLab] = useState<ILaboratory | null>(null);
   const [loadingLab, setLoadingLab] = useState(false);
@@ -83,12 +81,13 @@ const StepResult: React.FC<StepComponentProps> = ({
       const fetchLab = async () => {
         setLoadingLab(true);
         try {
+          // Usamos el método correcto que definimos antes
           const data = await locationsService.getLaboratory(
             context.selectedCityId!,
           );
           setLab(data);
         } catch (error) {
-          console.error(error);
+          console.error("Error buscando laboratorio:", error);
         } finally {
           setLoadingLab(false);
         }
@@ -97,75 +96,77 @@ const StepResult: React.FC<StepComponentProps> = ({
     }
   }, [shouldShowLab, context.selectedCityId]);
 
-  // 4. LÓGICA DE ESTADÍSTICAS (ACTUALIZADA PARA OBTENER NOMBRE REAL DE CIUDAD)
+  // 4. LÓGICA DE ESTADÍSTICAS (¡REFACTORIZADA!) 📊
   const hasLogged = useRef(false);
 
   useEffect(() => {
-    // Solo registramos si no se ha hecho ya y tenemos datos geográficos
-    if (
-      !hasLogged.current &&
-      context.selectedProvinceId &&
-      context.selectedCityId
-    ) {
+    const logData = async () => {
+      // Evitamos doble log en React StrictMode
+      if (
+        hasLogged.current ||
+        !context.selectedProvinceId ||
+        !context.selectedCityId
+      )
+        return;
       hasLogged.current = true;
 
-      const logStatistics = async () => {
-        let realCityName = "Desconocida";
+      try {
+        // A. OBTENER NOMBRES REALES (Para no guardar IDs)
+        // Ejecutamos ambas peticiones en paralelo para ser más rápidos
+        const [provinces, cities] = await Promise.all([
+          locationsService.getProvinces(),
+          locationsService.getCities(context.selectedProvinceId),
+        ]);
 
-        try {
-          // BUSCAMOS EL NOMBRE REAL DE LA CIUDAD
-          // Pedimos la lista de ciudades de esa provincia y buscamos la que coincida con el ID
-          const cities = await locationsService.getCities(
-            context.selectedProvinceId!,
-          );
-          const foundCity = cities.find((c) => c.id === context.selectedCityId);
+        const provinceObj = provinces.find(
+          (p) => p.id === context.selectedProvinceId,
+        );
+        const cityObj = cities.find((c) => c.id === context.selectedCityId);
 
-          if (foundCity) {
-            realCityName = foundCity.name; // Ej: "General Pico"
-          } else {
-            realCityName = `City ID: ${context.selectedCityId}`; // Fallback
-          }
-        } catch (error) {
-          console.error("No se pudo obtener el nombre de la ciudad", error);
-          realCityName = `City ID: ${context.selectedCityId}`;
-        }
+        // Si no encontramos el nombre, usamos un fallback, pero esto ya no debería pasar
+        const realProvinceName = provinceObj ? provinceObj.name : "Desconocida";
+        const realCityName = cityObj ? cityObj.name : "Desconocida";
 
-        const provinceName =
-          context.selectedProvinceId === 1 ? "La Pampa" : "Santa Fe";
-
+        // B. PREPARAR PAYLOAD
         const payload = {
-          provinceName: provinceName,
-          cityName: realCityName, // <--- AHORA ENVIAMOS EL NOMBRE REAL
+          provinceName: realProvinceName, // ¡AHORA ES DINÁMICO! Córdoba funcionará.
+          cityName: realCityName,
           resultVariant: stepData.variant,
-          resultTitle: stepData.title,
+          // Puedes agregar más datos del contexto si los tienes (ej: grupo de riesgo)
+          isRiskGroup: false, // O sacar de context si lo guardaste
+          diagnosisType: "Generado por Wizard",
+          patientWeightRange: "No especificado",
         };
 
-        console.log("📊 Registrando estadística...", payload);
+        console.log("📊 Enviando estadística:", payload);
 
-        fetch("http://localhost:3000/stats/log", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }).catch((err) => console.error("Error al guardar estadísticas:", err));
-      };
+        // C. ENVIAR USANDO EL SERVICIO (AXIOS)
+        await statsService.logConsultation(payload);
+      } catch (error) {
+        console.error("Error registrando estadística:", error);
+        // No bloqueamos la UI si falla el log
+      }
+    };
 
-      logStatistics();
-    }
+    logData();
   }, [context.selectedProvinceId, context.selectedCityId, stepData]);
 
+  // --- RENDERIZADO ---
   return (
     <div className="animate-fadeIn text-center">
+      {/* ÍCONO */}
       <div className="mb-6 flex justify-center">
         <div className={`rounded-full p-6 border-4 ${styles.bgIcon}`}>
           <span className="text-6xl">{styles.icon}</span>
         </div>
       </div>
 
+      {/* TÍTULO */}
       <h2 className={`text-3xl font-bold mb-4 ${styles.title}`}>
         {stepData.title}
       </h2>
 
-      {/* PARTE MÉDICA */}
+      {/* CAJA MÉDICA */}
       <div
         className={`p-6 rounded-xl border shadow-lg mb-6 text-left whitespace-pre-line ${styles.box}`}
       >
@@ -174,7 +175,7 @@ const StepResult: React.FC<StepComponentProps> = ({
         </p>
       </div>
 
-      {/* PARTE LOGÍSTICA */}
+      {/* CAJA LOGÍSTICA */}
       {displayContent.logistics && (
         <div className="p-6 rounded-xl border border-blue-500/30 bg-blue-900/10 mb-8 text-left animate-fadeIn">
           <h3 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
@@ -186,7 +187,7 @@ const StepResult: React.FC<StepComponentProps> = ({
         </div>
       )}
 
-      {/* LABORATORIO */}
+      {/* CAJA LABORATORIO */}
       {shouldShowLab && (
         <div className="mb-8 text-left animate-fadeIn">
           <h3 className="text-lg font-bold text-gray-400 mb-4 flex items-center gap-2">
@@ -206,15 +207,15 @@ const StepResult: React.FC<StepComponentProps> = ({
               {lab.phone && (
                 <a
                   href={`tel:${lab.phone}`}
-                  className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   📞 Llamar
                 </a>
               )}
             </div>
           ) : (
-            <p className="text-gray-500 italic text-center">
-              Sin laboratorio asignado.
+            <p className="text-gray-500 italic text-center border border-gray-700 p-4 rounded-lg">
+              No hay un laboratorio asignado a esta ciudad en el sistema.
             </p>
           )}
         </div>

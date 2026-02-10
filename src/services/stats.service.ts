@@ -36,4 +36,15 @@ export const statsService = {
       })),
     };
   },
+
+  async logConsultation(data: {
+    provinceName: string;
+    cityName: string;
+    resultVariant: number;
+    diagnosisType?: string; // Opcionales según tu entidad
+    isRiskGroup?: boolean;
+    patientWeightRange?: string;
+  }) {
+    await statsApi.post("/log", data);
+  },
 };
