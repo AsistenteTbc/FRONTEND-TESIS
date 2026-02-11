@@ -4,9 +4,10 @@ import {
   X,
   Activity,
   Home,
-  BarChart2, // <--- IMPORTAMOS EL ÍCONO DE ESTADÍSTICAS
+  BarChart2,
+  LogIn, // <--- IMPORTAMOS EL ÍCONO DE ESTADÍSTICAS
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { href, Link, useLocation } from "react-router-dom";
 
 // Navbar Component
 export const Navbar: React.FC = () => {
@@ -18,6 +19,7 @@ export const Navbar: React.FC = () => {
     { name: "Tuberculosis", icon: Activity, href: "/tuberculosis" },
     { name: "Estadísticas", icon: BarChart2, href: "/dashboard" },
     { name: "Admin", icon: Activity, href: "/admin" },
+    { name: "Login", icon: LogIn, href: "/login" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

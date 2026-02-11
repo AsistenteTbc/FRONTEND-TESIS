@@ -1,50 +1,28 @@
-import { statsApi } from "./api";
-import type { DashboardFilters } from "../types/stats";
+import axios from "axios";
+import type { DashboardFilters, DashboardStats } from "../types/stats"; // <--- Importar tipos
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+const statsApi = axios.create({
+  baseURL: `${BASE_URL}/stats`,
+});
 
 export const statsService = {
-  async getDashboardStats(filters: DashboardFilters) {
-    // 3. Preparamos el objeto de parámetros
-    // Axios ignorará automáticamente los que sean undefined,
-    // pero como tu lógica usa "TODAS", lo filtramos manual.
+  // Ahora especificamos que devuelve Promise<DashboardStats>
+  async getDashboardStats(filters: DashboardFilters): Promise<DashboardStats> {
     const params: Record<string, string> = {};
 
-    if (filters.province !== "TODAS") params.province = filters.province;
+    if (filters.province && filters.province !== "TODAS") {
+      params.province = filters.province;
+    }
     if (filters.from) params.from = filters.from;
     if (filters.to) params.to = filters.to;
 
-    // 4. Llamada limpia con Axios
-    // Axios se encarga de serializar los params (?province=X&from=Y...)
     const { data } = await statsApi.get("/dashboard", { params });
-
-    // 5. Normalización de datos (Conversión a Number para los gráficos)
-    return {
-      byProvince: data.byProvince.map((i: any) => ({
-        ...i,
-        value: Number(i.value),
-      })),
-      bySeverity: data.bySeverity.map((i: any) => ({
-        ...i,
-        value: Number(i.value),
-      })),
-      byCity: (data.byCity || []).map((i: any) => ({
-        ...i,
-        value: Number(i.value),
-      })),
-      byTrend: (data.byTrend || []).map((i: any) => ({
-        ...i,
-        value: Number(i.value),
-      })),
-    };
+    return data;
   },
 
-  async logConsultation(data: {
-    provinceName: string;
-    cityName: string;
-    resultVariant: number;
-    diagnosisType?: string; // Opcionales según tu entidad
-    isRiskGroup?: boolean;
-    patientWeightRange?: string;
-  }) {
+  async logConsultation(data: any) {
     await statsApi.post("/log", data);
   },
 };
