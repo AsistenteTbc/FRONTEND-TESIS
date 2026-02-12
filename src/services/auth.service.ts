@@ -1,11 +1,11 @@
-import axios from "axios";
-
-// Ajusta esto si tu puerto es distinto
-const API_URL = "http://localhost:3000/auth";
+import { authApi } from "./api";
 
 export const authService = {
   async login(email: string, password: string) {
-    const response = await axios.post(`${API_URL}/login`, { email, password });
+    // Usamos authApi.post('/login').
+    // Como authApi ya tiene base '/auth', la ruta final será '/auth/login'
+    const response = await authApi.post("/login", { email, password });
+
     if (response.data.access_token) {
       localStorage.setItem("token", response.data.access_token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -19,6 +19,11 @@ export const authService = {
     window.location.href = "/login";
   },
 
+  isAuthenticated() {
+    return !!localStorage.getItem("token");
+  },
+
+  // (Opcional) Helper para obtener el usuario actual sin parsearlo cada vez en los componentes
   getCurrentUser() {
     const userStr = localStorage.getItem("user");
     if (userStr) return JSON.parse(userStr);

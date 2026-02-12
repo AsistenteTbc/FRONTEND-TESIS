@@ -28,3 +28,10 @@ export const locationsApi = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+export const authApi = axios.create({
+  baseURL: `${API_URL}/auth`,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
