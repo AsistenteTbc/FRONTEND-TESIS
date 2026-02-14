@@ -13,15 +13,11 @@ export const useWizard = () => {
     selectedProvinceId: undefined,
     selectedCityId: undefined,
     history: [],
-    answers: {},
+    answers: {}, // Se llenará con { id_paso: { label: "Si", value: "RISK_TRUE" } }
   });
 
-  // Cargar paso inicial (ID 1)
-  useEffect(() => {
-    loadStep(1);
-  }, []);
-
-  const loadStep = async (stepId: number) => {
+  // Función para cargar un paso (definida antes del useEffect)
+  const loadStep = useCallback(async (stepId: number) => {
     setLoading(true);
     setError(false);
     try {
@@ -40,11 +36,15 @@ export const useWizard = () => {
       setLoading(false);
       setTransitioning(false);
     }
-  };
+  }, []);
+
+  // Cargar paso inicial (ID 1) al montar
+  useEffect(() => {
+    loadStep(1);
+  }, [loadStep]);
 
   /**
    * Lógica central de navegación.
-   * Recibe un payload que depende del tipo de paso actual.
    */
   const handleNext = useCallback(
     async (payload?: number | string) => {
@@ -54,21 +54,17 @@ export const useWizard = () => {
       try {
         // --- CASO 1: SELECCIÓN DE PROVINCIA ---
         if (stepData.code === "STEP_PROVINCE") {
-          // Payload es el ID de la provincia
           if (typeof payload === "number") {
             setContext((prev) => ({ ...prev, selectedProvinceId: payload }));
-            // Asumimos que el paso de Ciudad es el siguiente (ID actual + 1)
-            // O puedes hardcodear que vaya al paso 2
+            // Asumimos que el siguiente paso es el ID actual + 1
             await loadStep(stepData.id + 1);
           }
         }
 
         // --- CASO 2: SELECCIÓN DE CIUDAD ---
         else if (stepData.code === "STEP_CITY") {
-          // Payload es el ID de la ciudad
           if (typeof payload === "number") {
             setContext((prev) => ({ ...prev, selectedCityId: payload }));
-            // Asumimos que la primera pregunta es el siguiente paso
             await loadStep(stepData.id + 1);
           }
         }
@@ -78,12 +74,10 @@ export const useWizard = () => {
           stepData.code === "STEP_QUESTION" ||
           stepData.code.startsWith("STEP_Q")
         ) {
-          // Payload es el `nextStepId` que viene de la opción elegida
           if (typeof payload === "number") {
             const nextStepId = payload;
 
-            // BUSCAMOS QUÉ OPCIÓN SE ELIGIÓ PARA GUARDAR EL TEXTO (LABEL)
-            // Esto es necesario para las estadísticas finales
+            // Buscamos la opción elegida para guardar label Y value
             const selectedOption = stepData.options?.find(
               (opt) => opt.nextStepId === nextStepId,
             );
@@ -93,7 +87,11 @@ export const useWizard = () => {
                 ...prev,
                 answers: {
                   ...prev.answers,
-                  [stepData.id]: selectedOption.label, // Usamos 'label' según tu interfaz
+                  // 👇 IMPORTANTE: Guardamos el objeto completo para la lógica final
+                  [stepData.id]: {
+                    label: selectedOption.label,
+                    value: selectedOption.value,
+                  },
                 },
               }));
             }
@@ -104,7 +102,6 @@ export const useWizard = () => {
 
         // --- CASO 4: RESULTADO FINAL (RESET) ---
         else if (stepData.is_end || stepData.code === "STEP_RESULT") {
-          // Si el usuario da a "Nueva consulta", reiniciamos todo
           setContext({
             selectedProvinceId: undefined,
             selectedCityId: undefined,
@@ -115,10 +112,10 @@ export const useWizard = () => {
         }
       } catch (error) {
         console.error("Error en navegación:", error);
-        setTransitioning(false); // Aseguramos quitar el loading si falla
+        setTransitioning(false);
       }
     },
-    [stepData],
+    [stepData, loadStep],
   );
 
   const handleBack = useCallback(() => {
@@ -130,7 +127,6 @@ export const useWizard = () => {
       setContext((prev) => ({ ...prev, history: newHistory }));
 
       setTransitioning(true);
-      // Usamos stepsService en lugar de wizardService
       stepsService.getStepById(prevStepId).then((data) => {
         setStepData(data);
         setTransitioning(false);

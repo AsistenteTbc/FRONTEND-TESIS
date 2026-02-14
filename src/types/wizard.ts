@@ -28,6 +28,7 @@ export interface IOption {
   id: number;
   label: string;
   nextStepId: number;
+  value?: string;
 }
 
 // La definición de un "Paso" genérico
@@ -64,5 +65,5 @@ export interface WizardContextState {
   selectedProvinceId?: number;
   selectedCityId?: number;
   history: number[]; // Array de IDs de pasos visitados
-  answers: Record<number, string>;
+  answers: Record<number, { label: string; value?: string }>;
 }
