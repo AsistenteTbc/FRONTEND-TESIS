@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import type { StepComponentProps, ILaboratory } from "../../../types/wizard";
 import { locationsService } from "../../../services/locations.service";
-import { statsService } from "../../../services/stats.service"; // <--- IMPORTAMOS STATS SERVICE
+import { statsService } from "../../../services/stats.service";
 import { Button } from "../../ui/Button";
 import { LoadingSpinner } from "../../ui/LoadingSpinner";
+import { LabMap } from "../../maps/LabMap";
 
 const StepResult: React.FC<StepComponentProps> = ({
   stepData,
@@ -13,28 +14,28 @@ const StepResult: React.FC<StepComponentProps> = ({
   // 1. ESTILOS VISUALES (Variant)
   const getStyles = (variant: number = 1) => {
     switch (variant) {
-      case 2:
+      case 2: // Success
         return {
           icon: "✅",
           bgIcon: "bg-green-900/30 border-green-500/50 text-green-500",
           title: "text-green-400",
           box: "bg-green-900/20 border-green-600/50",
         };
-      case 3:
+      case 3: // Warning
         return {
           icon: "⚠️",
           bgIcon: "bg-yellow-900/30 border-yellow-500/50 text-yellow-500",
           title: "text-yellow-400",
           box: "bg-yellow-900/20 border-yellow-600/50",
         };
-      case 4:
+      case 4: // Danger
         return {
           icon: "🚨",
           bgIcon: "bg-red-900/30 border-red-500/50 text-red-500",
           title: "text-red-400",
           box: "bg-red-900/20 border-red-600/50",
         };
-      default:
+      default: // Info
         return {
           icon: "ℹ️",
           bgIcon: "bg-blue-900/30 border-blue-500/50 text-blue-500",
@@ -45,7 +46,7 @@ const StepResult: React.FC<StepComponentProps> = ({
   };
   const styles = getStyles(stepData.variant);
 
-  // 2. LÓGICA DE FILTRADO DE CONTENIDO
+  // 2. LÓGICA DE FILTRADO DE CONTENIDO (Medical vs Logistics)
   const [displayContent, setDisplayContent] = useState<{
     medical: string;
     logistics: string;
@@ -56,6 +57,7 @@ const StepResult: React.FC<StepComponentProps> = ({
       const parsed = JSON.parse(stepData.content || "");
       if (parsed.medical && parsed.logistics) {
         const provinceId = context.selectedProvinceId;
+        // Obtenemos la logística específica de la provincia seleccionada
         const logisticsText = parsed.logistics[provinceId?.toString() || "1"];
 
         setDisplayContent({
@@ -71,7 +73,7 @@ const StepResult: React.FC<StepComponentProps> = ({
     }
   }, [stepData, context.selectedProvinceId]);
 
-  // 3. LÓGICA DE LABORATORIO (ASSIGNED LAB)
+  // 3. LÓGICA DE LABORATORIO (Buscar por ciudad seleccionada)
   const shouldShowLab = !!context.selectedCityId;
   const [lab, setLab] = useState<ILaboratory | null>(null);
   const [loadingLab, setLoadingLab] = useState(false);
@@ -81,7 +83,6 @@ const StepResult: React.FC<StepComponentProps> = ({
       const fetchLab = async () => {
         setLoadingLab(true);
         try {
-          // Usamos el método correcto que definimos antes
           const data = await locationsService.getLaboratory(
             context.selectedCityId!,
           );
@@ -96,23 +97,22 @@ const StepResult: React.FC<StepComponentProps> = ({
     }
   }, [shouldShowLab, context.selectedCityId]);
 
-  // 4. LÓGICA DE ESTADÍSTICAS (¡REFACTORIZADA!) 📊
+  // 4. LÓGICA DE ESTADÍSTICAS REALES 📊
   const hasLogged = useRef(false);
 
   useEffect(() => {
     const logData = async () => {
-      // Evitamos doble log en React StrictMode
       if (
         hasLogged.current ||
         !context.selectedProvinceId ||
         !context.selectedCityId
       )
         return;
+
       hasLogged.current = true;
 
       try {
-        // A. OBTENER NOMBRES REALES (Para no guardar IDs)
-        // Ejecutamos ambas peticiones en paralelo para ser más rápidos
+        // A. Obtener nombres reales de ubicación
         const [provinces, cities] = await Promise.all([
           locationsService.getProvinces(),
           locationsService.getCities(context.selectedProvinceId),
@@ -123,37 +123,60 @@ const StepResult: React.FC<StepComponentProps> = ({
         );
         const cityObj = cities.find((c) => c.id === context.selectedCityId);
 
-        // Si no encontramos el nombre, usamos un fallback, pero esto ya no debería pasar
-        const realProvinceName = provinceObj ? provinceObj.name : "Desconocida";
-        const realCityName = cityObj ? cityObj.name : "Desconocida";
+        // B. INFERENCIA DE DATOS DESDE LAS RESPUESTAS (context.answers)
+        const answersList = Object.values(context.answers || {});
 
-        // B. PREPARAR PAYLOAD
+        // Detectar Grupo de Riesgo (Buscamos palabras clave en las respuestas)
+        const riskKeywords = [
+          "vih",
+          "sida",
+          "diabetes",
+          "cáncer",
+          "transplante",
+          "inmunosuprimido",
+          "contacto estrecho",
+        ];
+        const isRiskGroup = answersList.some((ans) =>
+          riskKeywords.some((keyword) => ans.toLowerCase().includes(keyword)),
+        );
+
+        // Detectar Rango de Peso
+        const weightAnswer =
+          answersList.find(
+            (ans) =>
+              ans.toLowerCase().includes("kg") ||
+              ans.toLowerCase().includes("kilos") ||
+              ans.includes(">") ||
+              ans.includes("<"),
+          ) || "No especificado";
+
+        // C. Armar el payload final
         const payload = {
-          provinceName: realProvinceName, // ¡AHORA ES DINÁMICO! Córdoba funcionará.
-          cityName: realCityName,
-          resultVariant: stepData.variant,
-          // Puedes agregar más datos del contexto si los tienes (ej: grupo de riesgo)
-          isRiskGroup: false, // O sacar de context si lo guardaste
-          diagnosisType: "Generado por Wizard",
-          patientWeightRange: "No especificado",
+          provinceName: provinceObj ? provinceObj.name : "Desconocida",
+          cityName: cityObj ? cityObj.name : "Desconocida",
+          resultVariant: stepData.variant, // 2=Sano, 3=Sospecha, 4=Urgente
+          diagnosisType: stepData.title, // "Posible Caso", "Atención Inmediata", etc.
+          isRiskGroup: isRiskGroup, // Booleano real calculado
+          patientWeightRange: weightAnswer, // String real calculado
         };
 
-        console.log("📊 Enviando estadística:", payload);
-
-        // C. ENVIAR USANDO EL SERVICIO (AXIOS)
         await statsService.logConsultation(payload);
       } catch (error) {
         console.error("Error registrando estadística:", error);
-        // No bloqueamos la UI si falla el log
       }
     };
 
     logData();
-  }, [context.selectedProvinceId, context.selectedCityId, stepData]);
+  }, [
+    context.selectedProvinceId,
+    context.selectedCityId,
+    stepData,
+    context.answers,
+  ]);
 
   // --- RENDERIZADO ---
   return (
-    <div className="animate-fadeIn text-center">
+    <div className="animate-fadeIn text-center pb-6">
       {/* ÍCONO */}
       <div className="mb-6 flex justify-center">
         <div className={`rounded-full p-6 border-4 ${styles.bgIcon}`}>
@@ -187,40 +210,60 @@ const StepResult: React.FC<StepComponentProps> = ({
         </div>
       )}
 
-      {/* CAJA LABORATORIO */}
+      {/* CAJA LABORATORIO Y MAPA */}
       {shouldShowLab && (
         <div className="mb-8 text-left animate-fadeIn">
           <h3 className="text-lg font-bold text-gray-400 mb-4 flex items-center gap-2">
             <span>📍</span> Centro de Recepción de Muestras:
           </h3>
+
           {loadingLab ? (
             <div className="flex justify-center p-4">
               <LoadingSpinner />
             </div>
           ) : lab ? (
-            <div className="bg-gray-800 p-6 rounded-xl border border-gray-600 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div>
-                <p className="font-bold text-white text-xl mb-1">{lab.name}</p>
-                <div className="text-gray-400">{lab.address}</div>
-                <div className="text-gray-500 text-sm mt-1">{lab.horario}</div>
+            <div className="space-y-4">
+              {/* Tarjeta de Info */}
+              <div className="bg-gray-800 p-6 rounded-xl border border-gray-600 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                  <p className="font-bold text-white text-xl mb-1">
+                    {lab.name}
+                  </p>
+                  <div className="text-gray-400">{lab.address}</div>
+                  <div className="text-gray-500 text-sm mt-1">
+                    {lab.horario}
+                  </div>
+                </div>
+                {lab.phone && (
+                  <a
+                    href={`tel:${lab.phone}`}
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    📞 Llamar
+                  </a>
+                )}
               </div>
-              {lab.phone && (
-                <a
-                  href={`tel:${lab.phone}`}
-                  className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  📞 Llamar
-                </a>
+
+              {/* MAPA */}
+              {lab.latitude && lab.longitude ? (
+                <div className="h-[300px] w-full rounded-xl overflow-hidden border border-gray-700 shadow-md">
+                  <LabMap labs={[lab]} />
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500 text-center p-3 bg-gray-800 rounded border border-gray-700">
+                  Mapa no disponible para este centro (Sin coordenadas).
+                </div>
               )}
             </div>
           ) : (
-            <p className="text-gray-500 italic text-center border border-gray-700 p-4 rounded-lg">
+            <p className="text-gray-500 italic text-center border border-gray-700 p-4 rounded-lg bg-gray-800/50">
               No hay un laboratorio asignado a esta ciudad en el sistema.
             </p>
           )}
         </div>
       )}
 
+      {/* BOTÓN FINAL */}
       <Button onClick={() => onNext()} variant="outline" fullWidth>
         🔄 Nueva consulta
       </Button>

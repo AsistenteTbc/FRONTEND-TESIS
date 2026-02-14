@@ -3,130 +3,145 @@ import { stepsService } from "../services/steps.service";
 import type { IStep, WizardContextState } from "../types/wizard";
 
 export const useWizard = () => {
-  // Estados
-  const [currentStepId, setCurrentStepId] = useState<number>(1);
   const [stepData, setStepData] = useState<IStep | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<boolean>(false);
+  const [error, setError] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
 
-  // Contexto del Wizard (Historial y Selecciones)
+  // Inicializamos el contexto
   const [context, setContext] = useState<WizardContextState>({
-    history: [],
     selectedProvinceId: undefined,
     selectedCityId: undefined,
+    history: [],
+    answers: {},
   });
 
-  // Cargar paso actual
+  // Cargar paso inicial (ID 1)
   useEffect(() => {
-    let isMounted = true;
+    loadStep(1);
+  }, []);
 
-    const loadStep = async () => {
-      setLoading(true);
-      setError(false);
-      try {
-        const data = await stepsService.getStepById(currentStepId);
+  const loadStep = async (stepId: number) => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await stepsService.getStepById(stepId);
+      setStepData(data);
 
-        // Pequeño delay artificial para suavizar la transición visual
-        setTimeout(() => {
-          if (isMounted) {
-            setStepData(data);
-            setLoading(false);
-            setTransitioning(false);
-          }
-        }, 300);
-      } catch (err) {
-        console.error("Error cargando paso:", err);
-        if (isMounted) {
-          setError(true);
-          setLoading(false);
-          setTransitioning(false);
-        }
-      }
-    };
+      // Actualizar historial (evitando duplicados)
+      setContext((prev) => {
+        if (prev.history.includes(stepId)) return prev;
+        return { ...prev, history: [...prev.history, stepId] };
+      });
+    } catch (err) {
+      console.error(err);
+      setError(true);
+    } finally {
+      setLoading(false);
+      setTransitioning(false);
+    }
+  };
 
-    loadStep();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentStepId]);
-
-  // Lógica de Avanzar (Next)
+  /**
+   * Lógica central de navegación.
+   * Recibe un payload que depende del tipo de paso actual.
+   */
   const handleNext = useCallback(
-    (payload?: number | string) => {
-      if (!stepData || transitioning) return;
-
+    async (payload?: number | string) => {
+      if (!stepData) return;
       setTransitioning(true);
 
-      // Guardar historial (si no es el resultado final)
-      if (stepData.code !== "STEP_RESULT") {
-        setContext((prev) => ({
-          ...prev,
-          history: [...prev.history, currentStepId],
-        }));
-      }
+      try {
+        // --- CASO 1: SELECCIÓN DE PROVINCIA ---
+        if (stepData.code === "STEP_PROVINCE") {
+          // Payload es el ID de la provincia
+          if (typeof payload === "number") {
+            setContext((prev) => ({ ...prev, selectedProvinceId: payload }));
+            // Asumimos que el paso de Ciudad es el siguiente (ID actual + 1)
+            // O puedes hardcodear que vaya al paso 2
+            await loadStep(stepData.id + 1);
+          }
+        }
 
-      // Máquina de estados simple
-      switch (stepData.code) {
-        case "STEP_PROVINCE":
-          setContext((prev) => ({
-            ...prev,
-            selectedProvinceId: Number(payload),
-          }));
-          setCurrentStepId(2); // Asumiendo que paso 2 es Ciudad
-          break;
+        // --- CASO 2: SELECCIÓN DE CIUDAD ---
+        else if (stepData.code === "STEP_CITY") {
+          // Payload es el ID de la ciudad
+          if (typeof payload === "number") {
+            setContext((prev) => ({ ...prev, selectedCityId: payload }));
+            // Asumimos que la primera pregunta es el siguiente paso
+            await loadStep(stepData.id + 1);
+          }
+        }
 
-        case "STEP_CITY":
-          setContext((prev) => ({ ...prev, selectedCityId: Number(payload) }));
-          setCurrentStepId(3); // Asumiendo que paso 3 es Preguntas
-          break;
+        // --- CASO 3: PREGUNTA NORMAL ---
+        else if (
+          stepData.code === "STEP_QUESTION" ||
+          stepData.code.startsWith("STEP_Q")
+        ) {
+          // Payload es el `nextStepId` que viene de la opción elegida
+          if (typeof payload === "number") {
+            const nextStepId = payload;
 
-        case "STEP_RESULT":
-          // Reset completo al terminar
+            // BUSCAMOS QUÉ OPCIÓN SE ELIGIÓ PARA GUARDAR EL TEXTO (LABEL)
+            // Esto es necesario para las estadísticas finales
+            const selectedOption = stepData.options?.find(
+              (opt) => opt.nextStepId === nextStepId,
+            );
+
+            if (selectedOption) {
+              setContext((prev) => ({
+                ...prev,
+                answers: {
+                  ...prev.answers,
+                  [stepData.id]: selectedOption.label, // Usamos 'label' según tu interfaz
+                },
+              }));
+            }
+
+            await loadStep(nextStepId);
+          }
+        }
+
+        // --- CASO 4: RESULTADO FINAL (RESET) ---
+        else if (stepData.is_end || stepData.code === "STEP_RESULT") {
+          // Si el usuario da a "Nueva consulta", reiniciamos todo
           setContext({
-            history: [],
             selectedProvinceId: undefined,
             selectedCityId: undefined,
+            history: [],
+            answers: {},
           });
-          setCurrentStepId(1);
-          break;
-
-        case "STEP_QUESTION":
-        default:
-          // Si es una pregunta normal, el payload es el ID del siguiente paso
-          if (typeof payload === "number") {
-            setCurrentStepId(payload);
-          }
-          break;
+          await loadStep(1);
+        }
+      } catch (error) {
+        console.error("Error en navegación:", error);
+        setTransitioning(false); // Aseguramos quitar el loading si falla
       }
     },
-    [stepData, currentStepId, transitioning],
+    [stepData],
   );
 
-  // Lógica de Retroceder (Back)
   const handleBack = useCallback(() => {
-    if (transitioning) return;
+    if (context.history.length > 1) {
+      const newHistory = [...context.history];
+      newHistory.pop(); // Sacar el actual
+      const prevStepId = newHistory[newHistory.length - 1]; // Obtener el anterior
 
-    setTransitioning(true);
-    setContext((prev) => {
-      const newHistory = [...prev.history];
-      const prevStepId = newHistory.pop();
+      setContext((prev) => ({ ...prev, history: newHistory }));
 
-      if (prevStepId) {
-        setTimeout(() => {
-          setCurrentStepId(prevStepId);
-          setTransitioning(false);
-        }, 200);
-      } else {
+      setTransitioning(true);
+      // Usamos stepsService en lugar de wizardService
+      stepsService.getStepById(prevStepId).then((data) => {
+        setStepData(data);
         setTransitioning(false);
-      }
+      });
+    }
+  }, [context.history]);
 
-      return { ...prev, history: newHistory };
-    });
-  }, [transitioning]);
-
-  const retry = () => setCurrentStepId(currentStepId); // Reintentar carga
+  const retry = () => {
+    if (stepData) loadStep(stepData.id);
+    else loadStep(1);
+  };
 
   return {
     stepData,

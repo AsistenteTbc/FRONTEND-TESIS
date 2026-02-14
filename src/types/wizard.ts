@@ -1,7 +1,3 @@
-// src/types/wizard.types.ts
-
-// --- Entidades de Base de Datos ---
-
 export interface IProvince {
   id: number;
   name: string;
@@ -13,6 +9,7 @@ export interface ICity {
   zipCode: string;
   provinceId: number;
   laboratorioId: number;
+  province?: IProvince;
 }
 
 export interface ILaboratory {
@@ -22,6 +19,9 @@ export interface ILaboratory {
   phone: string;
   horario: string;
   provinceId: number;
+  province?: IProvince;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface IOption {
@@ -38,6 +38,7 @@ export interface IStep {
   content?: string; // Puede ser null
   code: string; // CLAVE: 'STEP_PROVINCE', 'STEP_CITY', etc.
   is_end: boolean;
+  is_location?: boolean;
   options?: IOption[]; // Para pasos tipo "pregunta cerrada"
 }
 
@@ -63,4 +64,5 @@ export interface WizardContextState {
   selectedProvinceId?: number;
   selectedCityId?: number;
   history: number[]; // Array de IDs de pasos visitados
+  answers: Record<number, string>;
 }

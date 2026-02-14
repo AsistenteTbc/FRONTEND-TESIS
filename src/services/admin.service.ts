@@ -1,5 +1,5 @@
 import { adminApi } from "./api";
-import type { IProvince, ICity, ILaboratorio } from "../types/admin";
+import type { IProvince, ICity, ILaboratory } from "../types/wizard";
 
 export const adminService = {
   // PROVINCIAS
@@ -50,27 +50,22 @@ export const adminService = {
 
   // LABORATORIOS
 
-  async getLaboratorios(): Promise<ILaboratorio[]> {
+  async getLaboratorios(): Promise<ILaboratory[]> {
     // Nota: Asegúrate que el endpoint en backend sea /admin/laboratorios (no 'laboratories')
-    const { data } = await adminApi.get<ILaboratorio[]>("/laboratorios");
+    const { data } = await adminApi.get<ILaboratory[]>("/laboratorios");
     return data;
   },
 
-  async createLaboratorio(
-    payload: Partial<ILaboratorio>,
-  ): Promise<ILaboratorio> {
-    const { data } = await adminApi.post<ILaboratorio>(
-      "/laboratorios",
-      payload,
-    );
+  async createLaboratorio(payload: Partial<ILaboratory>): Promise<ILaboratory> {
+    const { data } = await adminApi.post<ILaboratory>("/laboratorios", payload);
     return data;
   },
 
   async updateLaboratorio(
     id: number,
-    payload: Partial<ILaboratorio>,
-  ): Promise<ILaboratorio> {
-    const { data } = await adminApi.put<ILaboratorio>(
+    payload: Partial<ILaboratory>,
+  ): Promise<ILaboratory> {
+    const { data } = await adminApi.put<ILaboratory>(
       `/laboratorios/${id}`,
       payload,
     );
