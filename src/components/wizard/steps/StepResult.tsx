@@ -253,14 +253,14 @@ const StepResult: React.FC<StepComponentProps> = ({
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
-          <div className={`${styles.bgLight} p-6 rounded-2xl border ${styles.border} w-fit`}>
+          <div className={`${styles.bgLight} p-6 rounded-2xl border ${styles.border} w-fit flex-shrink-0`}>
             <IconComponent className={`w-12 h-12 ${styles.accent}`} />
           </div>
-          <div className="flex-1">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 break-words">
               {stepData.title}
             </h2>
-            <p className="text-white/80 text-lg">Protocolo de actuación recomendado</p>
+            <p className="text-white/80 text-base md:text-lg break-words">Protocolo de actuación recomendado</p>
           </div>
         </div>
       </div>

@@ -80,7 +80,7 @@ const AdminLabs = () => {
     {
       header: "Nombre",
       accessorKey: "name" as keyof ILaboratorio,
-      className: "font-medium text-lg",
+      className: "text-gray-300 flex items-center gap-1",
     },
     {
       header: "Ubicación y Contacto",
@@ -134,36 +134,40 @@ const AdminLabs = () => {
   ];
 
   return (
-    <div className="p-6 bg-gray-900 text-white min-h-screen pt-24">
-      <AdminMenu />
+    <div className="w-full min-h-screen pt-24">
+      <div className="px-4 md:px-8 lg:px-12 mb-8">
+        <AdminMenu />
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Laboratorios</h2>
-        <button
-          onClick={() => {
-            setFormData(initialForm);
-            setIsModalOpen(true);
-          }}
-          className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded flex gap-2 transition-colors"
-        >
-          <Plus size={18} /> Nuevo Laboratorio
-        </button>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mt-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-white">Gestión de Laboratorios</h2>
+          <button
+            onClick={() => {
+              setFormData(initialForm);
+              setIsModalOpen(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded flex gap-2 transition-colors font-semibold w-fit"
+          >
+            <Plus size={18} /> Nuevo Laboratorio
+          </button>
+        </div>
       </div>
 
-      <Table
-        data={labs}
-        columns={columns}
-        emptyMessage="No hay laboratorios registrados."
-      />
+      <div className="animate-slideUp">
+        <Table
+          data={labs}
+          columns={columns}
+          emptyMessage="No hay laboratorios registrados."
+        />
+      </div>
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={formData.id ? "Editar Laboratorio" : "Crear Laboratorio"}
       >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
-            className="input-std"
+            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
             placeholder="Nombre"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -172,36 +176,35 @@ const AdminLabs = () => {
 
           {/* DIRECCIÓN (TEXTO) */}
           <div>
-            <label className="text-xs text-gray-400 ml-1">Dirección</label>
             <input
-              className="input-std"
-              placeholder="Ej: Av. Santa Fe 1234, Ciudad"
+              className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
+              placeholder="Dirección (Ej: Av. Santa Fe 1234, Ciudad)"
               value={formData.address}
               onChange={(e) =>
                 setFormData({ ...formData, address: e.target.value })
               }
               required
             />
-            <p className="text-[10px] text-gray-500 mt-1 ml-1">
+            <p className="text-[9px] text-gray-500 mt-0.5 ml-1">
               * Ingresa la dirección y luego marca el punto exacto en el mapa.
             </p>
           </div>
 
           {/* 👇 MAPA + INPUTS MANUALES */}
           <div className="border border-gray-600 rounded p-2 bg-gray-800">
-            <div className="flex justify-between items-end mb-2 gap-4">
+            <div className="flex justify-between items-end mb-2 gap-2">
               <span className="text-xs font-bold text-blue-400 mb-2">
                 Ubicación Exacta
               </span>
 
               {/* Inputs Editables de Latitud y Longitud */}
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <div className="flex flex-col">
-                  <label className="text-[10px] text-gray-400">Latitud</label>
+                  <label className="text-[9px] text-gray-400">Latitud</label>
                   <input
                     type="number"
-                    step="any" // Importante para permitir decimales largos
-                    className="bg-gray-700 text-white text-xs p-1 rounded border border-gray-600 w-24 focus:border-blue-500 outline-none"
+                    step="any"
+                    className="bg-gray-700 text-white text-xs p-1 rounded border border-gray-600 w-16 focus:border-blue-500 outline-none"
                     value={formData.latitude || ""}
                     onChange={(e) =>
                       handleLocationChange(
@@ -212,11 +215,11 @@ const AdminLabs = () => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-[10px] text-gray-400">Longitud</label>
+                  <label className="text-[9px] text-gray-400">Longitud</label>
                   <input
                     type="number"
                     step="any"
-                    className="bg-gray-700 text-white text-xs p-1 rounded border border-gray-600 w-24 focus:border-blue-500 outline-none"
+                    className="bg-gray-700 text-white text-xs p-1 rounded border border-gray-600 w-16 focus:border-blue-500 outline-none"
                     value={formData.longitude || ""}
                     onChange={(e) =>
                       handleLocationChange(
@@ -229,16 +232,18 @@ const AdminLabs = () => {
               </div>
             </div>
 
-            <LocationPicker
-              onLocationChange={handleLocationChange}
-              initialLat={formData.latitude}
-              initialLng={formData.longitude}
-            />
+            <div className="h-40 rounded overflow-hidden">
+              <LocationPicker
+                onLocationChange={handleLocationChange}
+                initialLat={formData.latitude}
+                initialLng={formData.longitude}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <input
-              className="input-std"
+              className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
               placeholder="Teléfono"
               value={formData.phone}
               onChange={(e) =>
@@ -246,7 +251,7 @@ const AdminLabs = () => {
               }
             />
             <input
-              className="input-std"
+              className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
               placeholder="Horario"
               value={formData.horario}
               onChange={(e) =>
@@ -256,7 +261,7 @@ const AdminLabs = () => {
           </div>
 
           <select
-            className="input-std"
+            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer"
             value={formData.provinceId}
             onChange={(e) =>
               setFormData({ ...formData, provinceId: Number(e.target.value) })
@@ -275,11 +280,11 @@ const AdminLabs = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="btn-secondary"
+              className="flex-1 backdrop-blur-sm bg-gray-500/20 hover:bg-gray-500/30 border border-gray-500/30 hover:border-gray-500/50 p-2 rounded-xl transition-all font-semibold text-white"
             >
               Cancelar
             </button>
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="flex-1 backdrop-blur-sm bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 hover:border-purple-500/50 p-2 rounded-xl transition-all font-semibold text-white">
               Guardar
             </button>
           </div>

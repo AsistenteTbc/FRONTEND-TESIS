@@ -127,28 +127,32 @@ const AdminCities = () => {
   ];
 
   return (
-    <div className="p-6 bg-gray-900 text-white min-h-screen pt-24">
-      <AdminMenu />
+    <div className="w-full min-h-screen pt-24">
+      <div className="px-4 md:px-8 lg:px-12 mb-8">
+        <AdminMenu />
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Ciudades</h2>
-        <button
-          onClick={() => {
-            setFormData(initialForm);
-            setIsModalOpen(true);
-          }}
-          className="bg-blue-600 px-4 py-2 rounded flex gap-2 hover:bg-blue-500 transition-colors"
-        >
-          <Plus size={18} /> Nueva Ciudad
-        </button>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mt-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-white">Gestión de Ciudades</h2>
+          <button
+            onClick={() => {
+              setFormData(initialForm);
+              setIsModalOpen(true);
+            }}
+            className="bg-blue-600 px-4 py-2 rounded flex gap-2 hover:bg-blue-500 transition-colors font-semibold w-fit"
+          >
+            <Plus size={18} /> Nueva Ciudad
+          </button>
+        </div>
       </div>
 
       {/* USO DEL COMPONENTE TABLE */}
-      <Table
-        data={cities}
-        columns={columns}
-        emptyMessage="No hay ciudades cargadas."
-      />
+      <div className="animate-slideUp">
+        <Table
+          data={cities}
+          columns={columns}
+          emptyMessage="No hay ciudades cargadas."
+        />
+      </div>
 
       {/* USO DEL COMPONENTE MODAL */}
       <Modal
@@ -158,14 +162,14 @@ const AdminCities = () => {
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
-            className="input-std"
+            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
             placeholder="Nombre"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
           />
           <input
-            className="input-std"
+            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
             placeholder="CP"
             value={formData.zipCode}
             onChange={(e) =>
@@ -175,7 +179,7 @@ const AdminCities = () => {
           />
 
           <select
-            className="input-std"
+            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer"
             value={formData.provinceId}
             onChange={(e) =>
               setFormData({
@@ -195,7 +199,7 @@ const AdminCities = () => {
           </select>
 
           <select
-            className="input-std"
+            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer disabled:opacity-50"
             value={formData.laboratorioId}
             onChange={(e) =>
               setFormData({
@@ -217,11 +221,11 @@ const AdminCities = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="btn-secondary"
+              className="flex-1 backdrop-blur-sm bg-gray-500/20 hover:bg-gray-500/30 border border-gray-500/30 hover:border-gray-500/50 p-2 rounded-xl transition-all font-semibold text-white"
             >
               Cancelar
             </button>
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="flex-1 backdrop-blur-sm bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 hover:border-cyan-500/50 p-2 rounded-xl transition-all font-semibold text-white">
               Guardar
             </button>
           </div>

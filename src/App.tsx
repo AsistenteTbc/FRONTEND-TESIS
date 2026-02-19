@@ -11,11 +11,11 @@ import { Layout } from "./components/layout/Layout";
 // Páginas Públicas
 import WizardPage from "./pages/WizardPage";
 import TuberculosisInfo from "./pages/TuberculosisInfo";
-import Login from "./pages/admin/Login"; // Asegúrate de que la ruta sea correcta (ej: ../pages/TuberculosisLogin o Login)
+import Login from "./pages/admin/Login";
 
 // Páginas Privadas (Admin/Dashboard)
 import Dashboard from "./pages/DashboardPage";
-import { AdminMenu } from "./pages/admin/AdminMenu";
+import AdminHome from "./pages/admin/AdminHome";
 import AdminCities from "./pages/admin/AdminCities";
 import AdminLabs from "./pages/admin/AdminLabs";
 import AdminProvinces from "./pages/admin/AdminProvince";
@@ -48,7 +48,7 @@ function App() {
           {/* Si no estás logueado, ProtectedRoute te manda al Login */}
           <Route element={<ProtectedRoute />}>
             {/* Rutas de Admin */}
-            <Route path="/admin" element={<AdminMenu />} />
+            <Route path="/admin" element={<AdminHome />} />
             <Route path="/admin/cities" element={<AdminCities />} />
             <Route path="/admin/laboratorios" element={<AdminLabs />} />
             <Route path="/admin/provinces" element={<AdminProvinces />} />

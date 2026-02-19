@@ -19,9 +19,9 @@ export const Table = <T extends { id: number | string }>({
   emptyMessage = "No hay datos.",
 }: TableProps<T>) => {
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-xl">
-      <table className="w-full text-left">
-        <thead className="bg-gray-700 text-gray-300 uppercase text-xs font-bold">
+    <div className="w-full rounded-lg overflow-x-auto border border-gray-700/50 shadow-xl bg-gray-800/30 backdrop-blur-sm">
+      <table className="w-full text-left min-w-max">
+        <thead className="bg-gray-700/60 text-gray-300 uppercase text-xs font-bold sticky top-0">
           <tr>
             {columns.map((col, idx) => (
               <th key={idx} className={`p-4 ${col.className || ""}`}>
@@ -30,12 +30,12 @@ export const Table = <T extends { id: number | string }>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-700">
+        <tbody className="divide-y divide-gray-700/50">
           {data.length > 0 ? (
             data.map((item) => (
               <tr
                 key={item.id}
-                className="hover:bg-gray-700/50 transition-colors"
+                className="hover:bg-gray-700/30 transition-colors"
               >
                 {columns.map((col, idx) => (
                   <td key={idx} className="p-4">

@@ -51,7 +51,7 @@ const AdminProvinces = () => {
     {
       header: "Nombre",
       accessorKey: "name" as keyof IProvince,
-      className: "font-medium text-lg",
+      className: "text-gray-300 flex items-center gap-1",
     },
     {
       header: "Acciones",
@@ -79,24 +79,26 @@ const AdminProvinces = () => {
   ];
 
   return (
-    <div className="p-6 bg-gray-900 text-white min-h-screen pt-24">
-      <AdminMenu />
+    <div className="w-full min-h-screen pt-24">
+      <div className="px-4 md:px-8 lg:px-12 mb-8">
+        <AdminMenu />
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Provincias</h2>
-        <button
-          onClick={() => {
-            setFormData({ name: "" });
-            setIsModalOpen(true);
-          }}
-          className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded flex gap-2 transition-colors"
-        >
-          <Plus size={18} /> Nueva Provincia
-        </button>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mt-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-white">Gestión de Provincias</h2>
+          <button
+            onClick={() => {
+              setFormData({ name: "" });
+              setIsModalOpen(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded flex gap-2 transition-colors font-semibold w-fit"
+          >
+            <Plus size={18} /> Nueva Provincia
+          </button>
+        </div>
       </div>
 
       {/* TABLA REUTILIZABLE */}
-      <div className="max-w-3xl">
+      <div className="animate-slideUp">
         <Table
           data={provinces}
           columns={columns}
@@ -112,12 +114,9 @@ const AdminProvinces = () => {
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="text-xs text-gray-400 uppercase font-bold">
-              Nombre
-            </label>
             <input
               className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-              placeholder="Ej: Córdoba"
+              placeholder="Nombre (Ej: Córdoba)"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })

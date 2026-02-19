@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // <--- Importar useEffect
 import { Navbar } from './Navbar';
 import { useLocation } from 'react-router-dom';
 import { useWizardContext } from '../../context/WizardContext';
@@ -11,10 +11,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const { isResultStep } = useWizardContext();
 
+  // 1. Lógica para cambiar el título de la pestaña
+  useEffect(() => {
+    const routeTitles: { [key: string]: string } = {
+      '/': 'Inicio',
+      '/tuberculosis': 'Tuberculosis',
+      '/dashboard': 'Estadísticas',
+      '/login': 'Login',
+    };
+
+    // Verificación especial para rutas de Admin que empiezan con /admin
+    let currentTitle = routeTitles[location.pathname] || 'TBC Portal';
+    
+    if (location.pathname.startsWith('/admin')) {
+      currentTitle = 'Admin';
+    }
+
+    document.title = `${currentTitle} | Sistema de Salud`;
+  }, [location]);
+
   // Definimos si es la página de estadísticas
   const isDashboard = location.pathname === '/dashboard';
   const isLogin = location.pathname === '/login';
   const isTuberculosis = location.pathname === '/tuberculosis';
+  const isAdmin = location.pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col font-sans text-white relative">
@@ -32,11 +52,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Main Content Dinámico */}
       <main className={`
         flex-grow flex relative z-10 px-4 pt-24 pb-8
-        ${isDashboard || isTuberculosis || isResultStep ? 'items-start justify-start' : 'items-center justify-center'}
+        ${isDashboard || isTuberculosis || isResultStep || isAdmin ? 'items-start justify-start' : 'items-center justify-center'}
       `}>
         <div className={`
           w-full transition-all duration-300
-          ${isDashboard || isTuberculosis || isResultStep ? 'max-w-full px-2 md:px-6' : 'max-w-4xl'}
+          ${isDashboard || isTuberculosis || isResultStep || isAdmin ? 'max-w-full px-2 md:px-6' : 'max-w-4xl'}
           ${isLogin ? 'max-w-md' : ''}
         `}>
           {children}
