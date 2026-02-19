@@ -90,7 +90,7 @@ const TuberculosisInfo = () => {
               TBC
             </h1>
           </div>
-          <p className="text-blue-50 text-base md:text-xl max-w-3xl leading-relaxed">
+          <p className="text-blue-50 text-base md:text-xl leading-relaxed">
             La tuberculosis es una enfermedad infecciosa causada por la bacteria{" "}
             <span className="font-semibold">Mycobacterium tuberculosis</span>.
             Afecta principalmente los pulmones, pero puede atacar otras partes
@@ -112,7 +112,7 @@ const TuberculosisInfo = () => {
             10 millones
           </p>
           <p className="text-gray-300 text-sm">
-            de personas enferman de TBC cada año en el mundo
+            de personas padecen de TBC cada año en el mundo
           </p>
         </div>
 

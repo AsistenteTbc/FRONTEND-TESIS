@@ -3,6 +3,7 @@ import { Routes, Route, Outlet } from "react-router-dom";
 
 // Contextos y Guardias
 import { AuthProvider } from "./context/AuthContext";
+import { WizardProvider } from "./context/WizardContext";
 
 // Componentes UI
 import { Layout } from "./components/layout/Layout";
@@ -23,9 +24,8 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 function App() {
   return (
     <AuthProvider>
-      {" "}
-      {/* 1. Todo envuelto en el AuthProvider */}
-      <Routes>
+      <WizardProvider>
+        <Routes>
         {/* --- RUTA LOGIN (Sin Layout) --- */}
         {/* Lo dejamos fuera para que ocupe toda la pantalla */}
 
@@ -55,6 +55,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      </WizardProvider>
     </AuthProvider>
   );
 }

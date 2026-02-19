@@ -47,6 +47,15 @@ export const useDashboardStats = () => {
   }, [fetchStats]);
 
   const updateFilter = (key: keyof DashboardFilters, value: string) => {
+    // Validación de fechas
+    if (key === "from" && filters.to && value > filters.to) {
+      console.warn("La fecha 'desde' no puede ser posterior a 'hasta'");
+      return; // No actualizar si la validación falla
+    }
+    if (key === "to" && filters.from && value < filters.from) {
+      console.warn("La fecha 'hasta' no puede ser anterior a 'desde'");
+      return; // No actualizar si la validación falla
+    }
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 

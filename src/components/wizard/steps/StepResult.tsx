@@ -5,6 +5,8 @@ import { statsService } from "../../../services/stats.service";
 import { Button } from "../../ui/Button";
 import { LoadingSpinner } from "../../ui/LoadingSpinner";
 import { LabMap } from "../../maps/LabMap";
+import { useWizardContext } from "../../../context/WizardContext";
+import { CheckCircle, AlertTriangle, AlertCircle, MapPin, Phone, Stethoscope, Building, RotateCcw } from "lucide-react";
 
 // Función auxiliar para normalizar texto (quitar acentos y minúsculas)
 // Esto evita errores si en la DB dice "SÍ" y comparamos con "si"
@@ -21,40 +23,60 @@ const StepResult: React.FC<StepComponentProps> = ({
   onNext,
   context,
 }) => {
-  // 1. ESTILOS VISUALES
+  // Notificar al Layout que estamos en resultado
+  const { setIsResultStep } = useWizardContext();
+  useEffect(() => {
+    setIsResultStep(true);
+    return () => setIsResultStep(false);
+  }, [setIsResultStep]);
+
+  // 1. ESTILOS VISUALES MEJORADOS
   const getStyles = (variant: number = 1) => {
     switch (variant) {
       case 2:
         return {
-          icon: "✅",
-          bgIcon: "bg-green-900/30 border-green-500/50 text-green-500",
+          icon: CheckCircle,
+          gradient: "from-green-600 to-green-700",
+          bgLight: "bg-green-500/10",
+          border: "border-green-500/30",
           title: "text-green-400",
-          box: "bg-green-900/20 border-green-600/50",
+          accent: "text-green-500",
+          badge: "bg-green-500/20 text-green-300",
         };
       case 3:
         return {
-          icon: "⚠️",
-          bgIcon: "bg-yellow-900/30 border-yellow-500/50 text-yellow-500",
+          icon: AlertTriangle,
+          gradient: "from-yellow-600 to-yellow-700",
+          bgLight: "bg-yellow-500/10",
+          border: "border-yellow-500/30",
           title: "text-yellow-400",
-          box: "bg-yellow-900/20 border-yellow-600/50",
+          accent: "text-yellow-500",
+          badge: "bg-yellow-500/20 text-yellow-300",
         };
       case 4:
         return {
-          icon: "🚨",
-          bgIcon: "bg-red-900/30 border-red-500/50 text-red-500",
+          icon: AlertCircle,
+          gradient: "from-red-600 to-red-700",
+          bgLight: "bg-red-500/10",
+          border: "border-red-500/30",
           title: "text-red-400",
-          box: "bg-red-900/20 border-red-600/50",
+          accent: "text-red-500",
+          badge: "bg-red-500/20 text-red-300",
         };
       default:
         return {
-          icon: "ℹ️",
-          bgIcon: "bg-blue-900/30 border-blue-500/50 text-blue-500",
+          icon: AlertCircle,
+          gradient: "from-blue-600 to-blue-700",
+          bgLight: "bg-blue-500/10",
+          border: "border-blue-500/30",
           title: "text-blue-400",
-          box: "bg-gray-800 border-gray-700",
+          accent: "text-blue-500",
+          badge: "bg-blue-500/20 text-blue-300",
         };
     }
   };
   const styles = getStyles(stepData.variant);
+  const IconComponent = styles.icon;
 
   // 2. CONTENIDO MÉDICO
   const [displayContent, setDisplayContent] = useState<{
@@ -222,91 +244,131 @@ const StepResult: React.FC<StepComponentProps> = ({
     context.answers,
   ]);
 
-  // --- RENDERIZADO (IGUAL) ---
+  // --- RENDERIZADO MEJORADO ---
   return (
-    <div className="animate-fadeIn text-center pb-6">
-      <div className="mb-6 flex justify-center">
-        <div className={`rounded-full p-6 border-4 ${styles.bgIcon}`}>
-          <span className="text-6xl">{styles.icon}</span>
+    <div className="animate-fadeIn w-full">
+      {/* Hero Section - Protocolo */}
+      <div className={`bg-gradient-to-br ${styles.gradient} rounded-3xl p-8 md:p-12 mb-8 overflow-hidden shadow-2xl relative`}>
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className={`${styles.bgLight} p-6 rounded-2xl border ${styles.border} w-fit`}>
+            <IconComponent className={`w-12 h-12 ${styles.accent}`} />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {stepData.title}
+            </h2>
+            <p className="text-white/80 text-lg">Protocolo de actuación recomendado</p>
+          </div>
         </div>
       </div>
 
-      <h2 className={`text-3xl font-bold mb-4 ${styles.title}`}>
-        {stepData.title}
-      </h2>
-
-      <div
-        className={`p-6 rounded-xl border shadow-lg mb-6 text-left whitespace-pre-line ${styles.box}`}
-      >
-        <p className="text-lg text-gray-200 leading-relaxed font-medium">
+      {/* Contenido Médico */}
+      <div className={`${styles.bgLight} border ${styles.border} rounded-2xl p-8 mb-8 backdrop-blur-sm`}>
+        <div className="flex items-center gap-2 mb-4">
+          <Stethoscope className={`w-6 h-6 ${styles.accent} flex-shrink-0`} />
+          <h3 className={`text-2xl font-bold ${styles.title}`}>
+            Protocolo Médico
+          </h3>
+        </div>
+        <p className="text-gray-200 leading-relaxed text-lg whitespace-pre-line">
           {displayContent.medical}
         </p>
       </div>
 
+      {/* Gestión Administrativa */}
       {displayContent.logistics && (
-        <div className="p-6 rounded-xl border border-blue-500/30 bg-blue-900/10 mb-8 text-left animate-fadeIn">
-          <h3 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
-            📋 GESTIÓN ADMINISTRATIVA LOCAL
-          </h3>
-          <p className="text-gray-300 leading-relaxed whitespace-pre-line">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-8 mb-8 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Building className="w-6 h-6 text-blue-400 flex-shrink-0" />
+            <h3 className="text-2xl font-bold text-blue-400">
+              Gestión Administrativa Local
+            </h3>
+          </div>
+          <p className="text-gray-300 leading-relaxed text-lg whitespace-pre-line">
             {displayContent.logistics}
           </p>
         </div>
       )}
 
+      {/* Laboratorio */}
       {shouldShowLab && (
-        <div className="mb-8 text-left animate-fadeIn">
-          <h3 className="text-lg font-bold text-gray-400 mb-4 flex items-center gap-2">
-            <span>📍</span> Centro de Recepción de Muestras:
-          </h3>
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <MapPin className="w-6 h-6 text-blue-400" />
+            <h3 className="text-2xl font-bold text-gray-100">
+              Centro de Recepción de Muestras
+            </h3>
+          </div>
 
           {loadingLab ? (
-            <div className="flex justify-center p-4">
+            <div className="flex justify-center p-8">
               <LoadingSpinner />
             </div>
           ) : lab ? (
             <div className="space-y-4">
-              <div className="bg-gray-800 p-6 rounded-xl border border-gray-600 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                  <p className="font-bold text-white text-xl mb-1">
-                    {lab.name}
-                  </p>
-                  <div className="text-gray-400">{lab.address}</div>
-                  <div className="text-gray-500 text-sm mt-1">
-                    {lab.horario}
+              {/* Tarjeta del Laboratorio */}
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl hover:border-blue-500/50 transition-all duration-300">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  <div className="flex-1">
+                    <h4 className="text-2xl font-bold text-white mb-3">
+                      {lab.name}
+                    </h4>
+                    <div className="space-y-2">
+                      <p className="text-gray-400 flex items-center gap-2">
+                        📍 {lab.address}
+                      </p>
+                      {lab.horario && (
+                        <p className="text-gray-400 flex items-center gap-2">
+                          🕐 {lab.horario}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  {lab.phone && (
+                    <a
+                      href={`tel:${lab.phone}`}
+                      className="flex items-center gap-2 bg-blue-950 hover:bg-blue-200 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl w-fit"
+                    >
+                      <Phone className="w-5 h-5" />
+                      Llamar
+                    </a>
+                  )}
                 </div>
-                {lab.phone && (
-                  <a
-                    href={`tel:${lab.phone}`}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    📞 Llamar
-                  </a>
-                )}
               </div>
 
+              {/* Mapa */}
               {lab.latitude && lab.longitude ? (
-                <div className="h-[300px] w-full rounded-xl overflow-hidden border border-gray-700 shadow-md">
-                  <LabMap labs={[lab]} />
+                <div className="h-96 w-full rounded-2xl overflow-hidden border border-gray-700 shadow-lg">
+                  <LabMap labs={[lab as any]} />
                 </div>
               ) : (
-                <div className="text-xs text-gray-500 text-center p-3 bg-gray-800 rounded border border-gray-700">
-                  Mapa no disponible.
+                <div className="text-center p-6 bg-gray-800/50 border border-gray-700 rounded-2xl text-gray-400">
+                  Coordenadas no disponibles
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-gray-500 italic text-center border border-gray-700 p-4 rounded-lg bg-gray-800/50">
-              No hay un laboratorio asignado.
-            </p>
+            <div className="text-center p-8 bg-gray-800/50 border border-gray-700 rounded-2xl text-gray-400">
+              No hay laboratorio asignado en tu zona
+            </div>
           )}
         </div>
       )}
 
-      <Button onClick={() => onNext()} variant="outline" fullWidth>
-        🔄 Nueva consulta
-      </Button>
+      {/* Botón Nueva Consulta */}
+      <div className="mt-12 pt-8 border-t border-gray-700">
+        <Button
+          onClick={() => onNext()}
+          variant="outline"
+          fullWidth
+          className="py-4 text-lg font-semibold"
+        >
+          🔄 Realizar Nueva Consulta
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,14 +1,24 @@
 import React from 'react';
 import { Navbar } from './Navbar';
+import { useLocation } from 'react-router-dom';
+import { useWizardContext } from '../../context/WizardContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const { isResultStep } = useWizardContext();
+
+  // Definimos si es la página de estadísticas
+  const isDashboard = location.pathname === '/dashboard';
+  const isLogin = location.pathname === '/login';
+  const isTuberculosis = location.pathname === '/tuberculosis';
+
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col font-sans text-white relative">
-      {/* Background Pattern - Fixed para no interferir con scroll */}
+      {/* Background Pattern - Fixed */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900/20"></div>
         <div className="absolute inset-0 opacity-20" style={{
@@ -17,17 +27,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }}></div>
       </div>
 
-      {/* Navbar */}
       <Navbar />
 
-      {/* Main Content - Ajustado para navbar de altura fija */}
-      <main className="flex-grow flex items-center justify-center px-4 pt-24 pb-8 relative z-10">
-        <div className="w-full max-w-4xl">
+      {/* Main Content Dinámico */}
+      <main className={`
+        flex-grow flex relative z-10 px-4 pt-24 pb-8
+        ${isDashboard || isTuberculosis || isResultStep ? 'items-start justify-start' : 'items-center justify-center'}
+      `}>
+        <div className={`
+          w-full transition-all duration-300
+          ${isDashboard || isTuberculosis || isResultStep ? 'max-w-full px-2 md:px-6' : 'max-w-4xl'}
+          ${isLogin ? 'max-w-md' : ''}
+        `}>
           {children}
         </div>
       </main>
       
-      {/* Footer - Ajustado para sticky bottom */}
+      {/* Footer */}
       <footer className="relative z-10 py-6 border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">

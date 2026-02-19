@@ -11,13 +11,15 @@ import {
 
 interface Props {
   data: any[];
+  title?: string; // <--- Agregamos esta línea
 }
 
-export const ChartTrend: React.FC<Props> = ({ data }) => {
+export const ChartTrend: React.FC<Props> = ({ data, title }) => { // <--- Recibimos 'title'
   return (
-    <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 mb-8">
+    <div className="bg-gray-800/30 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-gray-700/50 mb-8">
       <h3 className="text-xl mb-4 text-gray-300 font-semibold border-b border-gray-700 pb-2">
-        📉 Evolución de Casos en el Tiempo
+        {/* Usamos el title que viene por prop, o uno por defecto si no hay */}
+        📉 {title || "Evolución de Casos en el Tiempo"}
       </h3>
       <div className="h-[300px]">
         {data && data.length > 0 ? (
@@ -35,8 +37,9 @@ export const ChartTrend: React.FC<Props> = ({ data }) => {
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(str) => {
-                  const [year, month, day] = str.split("-");
-                  return `${day}/${month}`;
+                  if (!str) return "";
+                  const parts = str.split("-");
+                  return parts.length === 3 ? `${parts[2]}/${parts[1]}` : str;
                 }}
               />
               <YAxis
