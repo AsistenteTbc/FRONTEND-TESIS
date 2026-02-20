@@ -6,7 +6,16 @@ import { Button } from "../../ui/Button";
 import { LoadingSpinner } from "../../ui/LoadingSpinner";
 import { LabMap } from "../../maps/LabMap";
 import { useWizardContext } from "../../../context/WizardContext";
-import { CheckCircle, AlertTriangle, AlertCircle, MapPin, Phone, Stethoscope, Building, RotateCcw } from "lucide-react";
+import {
+  CheckCircle,
+  AlertTriangle,
+  AlertCircle,
+  MapPin,
+  Phone,
+  Stethoscope,
+  Building,
+  RotateCcw,
+} from "lucide-react";
 
 // Función auxiliar para normalizar texto (quitar acentos y minúsculas)
 // Esto evita errores si en la DB dice "SÍ" y comparamos con "si"
@@ -141,38 +150,24 @@ const StepResult: React.FC<StepComponentProps> = ({
       hasLogged.current = true;
 
       try {
-        const [provinces, cities] = await Promise.all([
-          locationsService.getProvinces(),
-          locationsService.getCities(context.selectedProvinceId),
-        ]);
-
-        const provinceObj = provinces.find(
-          (p) => p.id === context.selectedProvinceId,
-        );
-        const cityObj = cities.find((c) => c.id === context.selectedCityId);
-
-        // --- EXTRACCIÓN DE DATOS ---
+        // 👇 ¡YA NO NECESITAMOS HACER FETCH DE LAS PROVINCIAS/CIUDADES AQUÍ!
+        // Extraemos las respuestas
         const rawAnswers = Object.values(context.answers || {});
-        // Extraemos solo el texto (label) de cada respuesta y lo normalizamos para buscar
         const userChoicesNormalized = rawAnswers.map((ans: any) => {
           const text = typeof ans === "string" ? ans : ans.label;
           return normalize(text);
         });
-        // También guardamos las versiones originales para extraer números (peso)
         const userChoicesOriginal = rawAnswers.map((ans: any) =>
           typeof ans === "string" ? ans : ans.label,
         );
 
-        // A. GRUPO DE RIESGO (Boolean)
-        // En tu SQL la opción es: 'SÍ, es Grupo de Riesgo'
-        // Buscamos algo que contenga "si" y "grupo de riesgo"
+        // A. GRUPO DE RIESGO
         const isRiskGroup = userChoicesNormalized.some(
           (choice) =>
             choice.includes("grupo de riesgo") && choice.includes("si"),
         );
 
         // B. TIPO DE DIAGNÓSTICO
-        // En tu SQL las opciones son: 'Tuberculosis Pulmonar' y 'Tuberculosis Extrapulmonar'
         let diagnosisType = "Indeterminado";
         if (
           userChoicesNormalized.some((choice) =>
@@ -185,7 +180,6 @@ const StepResult: React.FC<StepComponentProps> = ({
         ) {
           diagnosisType = "Pulmonar";
         } else {
-          // Fallback: Si el título del resultado es "Protocolo: EXTRAPULMONAR"
           const titleNorm = normalize(stepData.title);
           if (titleNorm.includes("extrapulmonar"))
             diagnosisType = "Extrapulmonar";
@@ -196,21 +190,17 @@ const StepResult: React.FC<StepComponentProps> = ({
             diagnosisType = "Pulmonar";
         }
 
-        // C. PESO (String format)
-        // En tu SQL las opciones son: '30 a 34 kg', '55 kg o más', etc.
+        // C. PESO
         const weightChoice = userChoicesOriginal.find((text) =>
           text.toLowerCase().includes("kg"),
         );
         let weightFormatted = "No especificado";
 
         if (weightChoice) {
-          // Caso: "55 kg o más"
           if (weightChoice.includes("o más") || weightChoice.includes(">")) {
             const number = weightChoice.match(/\d+/);
             if (number) weightFormatted = `> ${number[0]} kg`;
-          }
-          // Caso: "30 a 34 kg"
-          else {
+          } else {
             const numbers = weightChoice.match(/\d+/g);
             if (numbers && numbers.length >= 2) {
               weightFormatted = `${numbers[0]}-${numbers[1]} kg`;
@@ -220,16 +210,17 @@ const StepResult: React.FC<StepComponentProps> = ({
           }
         }
 
+        // 👇 AHORA ENVIAMOS LOS IDs DIRECTAMENTE DEL CONTEXTO
         const payload = {
-          provinceName: provinceObj ? provinceObj.name : "Desconocida",
-          cityName: cityObj ? cityObj.name : "Desconocida",
-          resultVariant: stepData.variant, // Viene directo de la DB (2, 3 o 4)
-
-          diagnosisType: diagnosisType, // "Pulmonar" o "Extrapulmonar"
-          isRiskGroup: isRiskGroup, // true o false
-          patientWeightRange: weightFormatted, // "30-34 kg" o "> 55 kg"
+          provinceId: context.selectedProvinceId,
+          cityId: context.selectedCityId,
+          resultVariant: stepData.variant,
+          diagnosisType: diagnosisType,
+          isRiskGroup: isRiskGroup,
+          patientWeightRange: weightFormatted,
         };
 
+        console.log("📊 PAYLOAD SQL-MATCHED (IDs):", payload);
         await statsService.logConsultation(payload);
       } catch (error) {
         console.error("Error registrando estadística:", error);
@@ -248,25 +239,33 @@ const StepResult: React.FC<StepComponentProps> = ({
   return (
     <div className="animate-fadeIn w-full">
       {/* Hero Section - Protocolo */}
-      <div className={`bg-gradient-to-br ${styles.gradient} rounded-3xl p-8 md:p-12 mb-8 overflow-hidden shadow-2xl relative`}>
+      <div
+        className={`bg-gradient-to-br ${styles.gradient} rounded-3xl p-8 md:p-12 mb-8 overflow-hidden shadow-2xl relative`}
+      >
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
-          <div className={`${styles.bgLight} p-6 rounded-2xl border ${styles.border} w-fit flex-shrink-0`}>
+          <div
+            className={`${styles.bgLight} p-6 rounded-2xl border ${styles.border} w-fit flex-shrink-0`}
+          >
             <IconComponent className={`w-12 h-12 ${styles.accent}`} />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 break-words">
               {stepData.title}
             </h2>
-            <p className="text-white/80 text-base md:text-lg break-words">Protocolo de actuación recomendado</p>
+            <p className="text-white/80 text-base md:text-lg break-words">
+              Protocolo de actuación recomendado
+            </p>
           </div>
         </div>
       </div>
 
       {/* Contenido Médico */}
-      <div className={`${styles.bgLight} border ${styles.border} rounded-2xl p-8 mb-8 backdrop-blur-sm`}>
+      <div
+        className={`${styles.bgLight} border ${styles.border} rounded-2xl p-8 mb-8 backdrop-blur-sm`}
+      >
         <div className="flex items-center gap-2 mb-4">
           <Stethoscope className={`w-6 h-6 ${styles.accent} flex-shrink-0`} />
           <h3 className={`text-2xl font-bold ${styles.title}`}>
