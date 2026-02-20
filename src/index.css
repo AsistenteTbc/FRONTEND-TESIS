@@ -149,3 +149,41 @@ button:focus-visible {
 .react-select-dark .react-select__input {
   color: white !important;
 }
+
+
+
+/* Estilo para el calendario desplegable */
+.react-datepicker {
+  background-color: rgba(31, 41, 55, 0.9) !important; /* gray-800 con transparencia */
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(75, 85, 99, 0.5) !important;
+  border-radius: 1rem !important;
+  font-family: inherit !important;
+  color: white !important;
+}
+
+.react-datepicker__header {
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.5) !important;
+}
+
+.react-datepicker__current-month, 
+.react-datepicker__day-name, 
+.react-datepicker__day {
+  color: white !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(59, 130, 246, 0.5) !important; /* azul */
+  border-radius: 0.5rem !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-range {
+  background-color: #3b82f6 !important;
+  border-radius: 0.5rem !important;
+}
+
+.react-datepicker__day--disabled {
+  color: rgba(156, 163, 175, 0.3) !important;
+}

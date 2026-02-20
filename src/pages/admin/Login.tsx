@@ -28,7 +28,7 @@ const Login = () => {
 
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate("/admin");
     } catch (err: any) {
       if (err.response && err.response.status === 401) {
         setError("Correo o contraseña incorrectos.");

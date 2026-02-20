@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, X, Save } from "lucide-react";
 import { adminService } from "../../services/admin.service";
 import type { IProvince, ILaboratorio } from "../../types/admin";
 import { AdminMenu } from "./AdminMenu";
 import { Table } from "../../components/ui/Table";
 import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button"; // <--- Importamos tu componente
 
 const AdminCities = () => {
   const [cities, setCities] = useState<any[]>([]);
@@ -69,28 +70,27 @@ const AdminCities = () => {
     (l) => l.provinceId === Number(formData.provinceId),
   );
 
-  // --- CONFIGURACIÓN DE COLUMNAS ---
   const columns = [
     {
       header: "Ciudad",
       render: (city: any) => (
         <div>
-          <div className="font-medium text-lg">{city.name}</div>
-          <div className="text-xs text-gray-500">CP: {city.zipCode}</div>
+          <div className="font-medium text-lg text-white">{city.name}</div>
+          <div className="text-xs text-gray-500 font-mono">CP: {city.zipCode}</div>
         </div>
       ),
     },
     {
       header: "Provincia",
       render: (city: any) => (
-        <span className="text-blue-400">{city.province?.name}</span>
+        <span className="text-blue-400 font-medium">{city.province?.name}</span>
       ),
     },
     {
       header: "Laboratorio",
       render: (city: any) =>
         city.laboratorio ? (
-          <span className="text-green-400 text-sm">
+          <span className="text-green-400 text-sm bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
             {city.laboratorio.name}
           </span>
         ) : (
@@ -102,6 +102,7 @@ const AdminCities = () => {
       className: "text-right",
       render: (city: any) => (
         <div className="flex justify-end gap-2">
+          {/* BOTÓN EDITAR: Estilo clásico preferido */}
           <button
             onClick={() => {
               setFormData({
@@ -111,41 +112,43 @@ const AdminCities = () => {
               });
               setIsModalOpen(true);
             }}
-            className="text-blue-400 p-2 hover:bg-gray-700 rounded"
+            className="text-blue-400 p-2 hover:bg-gray-700 rounded transition-colors"
           >
             <Edit size={18} />
           </button>
-          <button
+          {/* BOTÓN ELIMINAR (DANGER) */}
+          <Button
+            variant="danger"
+            size="sm"
             onClick={() => handleDelete(city.id)}
-            className="text-red-400 p-2 hover:bg-gray-700 rounded"
-          >
-            <Trash2 size={18} />
-          </button>
+            icon={<Trash2 size={18} />}
+          />
         </div>
       ),
     },
   ];
 
   return (
-    <div className="w-full min-h-screen pt-24">
+    <div className="w-full min-h-screen pt-24 text-white font-sans">
       <div className="px-4 md:px-8 lg:px-12 mb-8">
         <AdminMenu />
 
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mt-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-white">Gestión de Ciudades</h2>
-          <button
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Gestión de Ciudades</h2>
+          
+          <Button
+            variant="success"
             onClick={() => {
               setFormData(initialForm);
               setIsModalOpen(true);
             }}
-            className="bg-blue-600 px-4 py-2 rounded flex gap-2 hover:bg-blue-500 transition-colors font-semibold w-fit"
+            icon={<Plus size={18} />}
           >
-            <Plus size={18} /> Nueva Ciudad
-          </button>
+            Nueva Ciudad
+          </Button>
         </div>
       </div>
 
-      {/* USO DEL COMPONENTE TABLE */}
       <div className="animate-slideUp">
         <Table
           data={cities}
@@ -154,23 +157,22 @@ const AdminCities = () => {
         />
       </div>
 
-      {/* USO DEL COMPONENTE MODAL */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={formData.id ? "Editar Ciudad" : "Crear Ciudad"}
       >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
           <input
-            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-            placeholder="Nombre"
+            className="w-full bg-gray-900/50 p-2.5 rounded-xl text-white border border-gray-700 focus:outline-none focus:border-blue-500 transition-all text-sm"
+            placeholder="Nombre de la ciudad"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
           />
           <input
-            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-            placeholder="CP"
+            className="w-full bg-gray-900/50 p-2.5 rounded-xl text-white border border-gray-700 focus:outline-none focus:border-blue-500 transition-all text-sm"
+            placeholder="Código Postal (CP)"
             value={formData.zipCode}
             onChange={(e) =>
               setFormData({ ...formData, zipCode: e.target.value })
@@ -179,7 +181,7 @@ const AdminCities = () => {
           />
 
           <select
-            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer"
+            className="w-full bg-gray-900/50 p-2.5 rounded-xl text-white border border-gray-700 focus:outline-none focus:border-blue-500 cursor-pointer text-sm appearance-none"
             value={formData.provinceId}
             onChange={(e) =>
               setFormData({
@@ -199,7 +201,7 @@ const AdminCities = () => {
           </select>
 
           <select
-            className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500 cursor-pointer disabled:opacity-50"
+            className="w-full bg-gray-900/50 p-2.5 rounded-xl text-white border border-gray-700 focus:outline-none focus:border-blue-500 cursor-pointer disabled:opacity-50 text-sm appearance-none"
             value={formData.laboratorioId}
             onChange={(e) =>
               setFormData({
@@ -218,16 +220,25 @@ const AdminCities = () => {
           </select>
 
           <div className="flex gap-3 mt-4">
-            <button
+            <Button
               type="button"
+              variant="danger"
+              size="sm"
+              fullWidth
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 backdrop-blur-sm bg-gray-500/20 hover:bg-gray-500/30 border border-gray-500/30 hover:border-gray-500/50 p-2 rounded-xl transition-all font-semibold text-white"
+              icon={<X size={18} />}
             >
               Cancelar
-            </button>
-            <button type="submit" className="flex-1 backdrop-blur-sm bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 hover:border-cyan-500/50 p-2 rounded-xl transition-all font-semibold text-white">
+            </Button>
+            <Button
+              type="submit"
+              variant="success"
+              size="sm"
+              fullWidth
+              icon={<Save size={18} />}
+            >
               Guardar
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

@@ -1,12 +1,13 @@
-import { useEffect } from "react"; // 👈 Importamos useEffect
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"; // 👈 Importamos useMap
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { MapPin, Phone, Clock } from "lucide-react";
+import { useEffect } from 'react'; // 👈 Importamos useEffect
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'; // 👈 Importamos useMap
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { MapPin, Phone, Clock } from 'lucide-react';
+import { Button } from '../ui/Button'; // <--- Importamos tu componente
 
 // --- FIX PARA ÍCONOS DE LEAFLET ---
-import icon from "leaflet/dist/images/marker-icon.png";
-import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -60,7 +61,7 @@ export const LabMap = ({ labs }: LabsMapProps) => {
       <MapContainer
         center={defaultCenter}
         zoom={9}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={false}
       >
         <TileLayer
@@ -114,12 +115,14 @@ export const LabMap = ({ labs }: LabsMapProps) => {
                   )}
 
                   <a
-                    href={`http://googleusercontent.com/maps.google.com/?q=${lab.latitude},${lab.longitude}`}
+                    href={`https://www.google.com/maps/search/?api=1&query=${lab.latitude},${lab.longitude}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="block mt-2 text-center bg-blue-600 text-white text-xs py-1 px-2 rounded hover:bg-blue-700 transition-colors"
+                    className="block mt-2"
                   >
-                    Cómo llegar
+                    <Button variant="primary" size="sm" fullWidth>
+                      Cómo llegar
+                    </Button>
                   </a>
                 </div>
               </Popup>

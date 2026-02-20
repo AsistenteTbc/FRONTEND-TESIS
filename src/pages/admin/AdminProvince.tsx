@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { Edit, Trash2, Plus } from "lucide-react";
-import type { IProvince } from "../../types/admin";
-import { adminService } from "../../services/admin.service";
-import { AdminMenu } from "./AdminMenu";
-import { Table } from "../../components/ui/Table";
-import { Modal } from "../../components/ui/Modal";
+import React, { useEffect, useState } from 'react';
+import { Edit, Trash2, Plus, X, Save } from 'lucide-react';
+import type { IProvince } from '../../types/admin';
+import { adminService } from '../../services/admin.service';
+import { AdminMenu } from './AdminMenu';
+import { Table } from '../../components/ui/Table';
+import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button'; // <--- Importante usar este
 
 const AdminProvinces = () => {
   const [provinces, setProvinces] = useState<IProvince[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<IProvince>>({ name: "" });
+  const [formData, setFormData] = useState<Partial<IProvince>>({ name: '' });
 
   const loadData = async () => {
     try {
@@ -30,49 +31,51 @@ const AdminProvinces = () => {
     else await adminService.createProvince(formData);
 
     setIsModalOpen(false);
-    setFormData({ name: "" });
+    setFormData({ name: '' });
     loadData();
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("¿Eliminar provincia?")) {
+    if (confirm('¿Eliminar provincia?')) {
       await adminService.deleteProvince(id);
       loadData();
     }
   };
 
-  // --- DEFINICIÓN DE COLUMNAS ---
   const columns = [
     {
-      header: "ID",
-      accessorKey: "id" as keyof IProvince,
-      className: "w-24 text-gray-500 font-mono",
+      header: 'ID',
+      accessorKey: 'id' as keyof IProvince,
+      className: 'w-24 text-gray-500 font-mono',
     },
     {
-      header: "Nombre",
-      accessorKey: "name" as keyof IProvince,
-      className: "text-gray-300 flex items-center gap-1",
+      header: 'Nombre',
+      accessorKey: 'name' as keyof IProvince,
+      className: 'text-gray-300 flex items-center gap-1',
     },
     {
-      header: "Acciones",
-      className: "text-right",
+      header: 'Acciones',
+      className: 'text-right',
+
       render: (prov: IProvince) => (
         <div className="flex justify-end gap-2">
           <button
             onClick={() => {
               setFormData(prov);
+
               setIsModalOpen(true);
             }}
             className="text-blue-400 p-2 hover:bg-gray-700 rounded"
           >
             <Edit size={18} />
           </button>
-          <button
+          {/* BOTÓN ELIMINAR (DANGER) */}
+          <Button
+            variant="danger"
+            size="sm"
             onClick={() => handleDelete(prov.id)}
-            className="text-red-400 p-2 hover:bg-gray-700 rounded"
-          >
-            <Trash2 size={18} />
-          </button>
+            icon={<Trash2 size={18} />}
+          />
         </div>
       ),
     },
@@ -84,20 +87,24 @@ const AdminProvinces = () => {
         <AdminMenu />
 
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mt-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-white">Gestión de Provincias</h2>
-          <button
+          <h2 className="text-2xl md:text-3xl font-bold text-white">
+            Gestión de Provincias
+          </h2>
+
+          {/* NUEVA PROVINCIA (SUCCESS) */}
+          <Button
+            variant="success"
             onClick={() => {
-              setFormData({ name: "" });
+              setFormData({ name: '' });
               setIsModalOpen(true);
             }}
-            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded flex gap-2 transition-colors font-semibold w-fit"
+            icon={<Plus size={18} />}
           >
-            <Plus size={18} /> Nueva Provincia
-          </button>
+            Nueva Provincia
+          </Button>
         </div>
       </div>
 
-      {/* TABLA REUTILIZABLE */}
       <div className="animate-slideUp">
         <Table
           data={provinces}
@@ -106,16 +113,15 @@ const AdminProvinces = () => {
         />
       </div>
 
-      {/* MODAL REUTILIZABLE */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={formData.id ? "Editar Provincia" : "Crear Provincia"}
+        title={formData.id ? 'Editar Provincia' : 'Crear Provincia'}
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <input
-              className="w-full bg-gray-700 p-2 rounded text-white border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="w-full bg-gray-900/50 p-3 rounded-xl text-white border border-gray-700 focus:outline-none focus:border-blue-500 transition-all"
               placeholder="Nombre (Ej: Córdoba)"
               value={formData.name}
               onChange={(e) =>
@@ -125,19 +131,25 @@ const AdminProvinces = () => {
             />
           </div>
           <div className="flex gap-3 mt-4">
-            <button
+            {/* CANCELAR (DANGER O GHOST) */}
+            <Button
               type="button"
+              variant="danger"
+              fullWidth
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 bg-gray-600 p-2 rounded hover:bg-gray-500"
+              icon={<X size={18} />}
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            {/* GUARDAR (SUCCESS) */}
+            <Button
               type="submit"
-              className="flex-1 bg-blue-600 p-2 rounded hover:bg-blue-500 font-bold"
+              variant="success"
+              fullWidth
+              icon={<Save size={18} />}
             >
               Guardar
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
