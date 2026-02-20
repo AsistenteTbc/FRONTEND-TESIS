@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { statsService } from "../services/stats.service";
-import { locationsService } from "../services/locations.service"; // <--- Usamos locations
+import { locationsService } from "../services/locations.service";
 import type { DashboardFilters, DashboardStats } from "../types/stats";
 
 export const useDashboardStats = () => {
@@ -9,12 +9,12 @@ export const useDashboardStats = () => {
   const [provincesList, setProvincesList] = useState<any[]>([]);
 
   const [filters, setFilters] = useState<DashboardFilters>({
-    province: "TODAS",
+    province: "TODAS", // Aquí guardamos el NOMBRE para que el Select funcione
     from: "",
     to: "",
   });
 
-  // 1. Cargar lista de provincias (Usando locationsService)
+  // 1. Cargar lista de provincias al montar el componente
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
@@ -27,21 +27,35 @@ export const useDashboardStats = () => {
     fetchProvinces();
   }, []);
 
-  // 2. Cargar estadísticas
-  // Usamos useCallback para evitar ciclos infinitos si se agrega como dependencia en otros lados
+  // 2. Cargar estadísticas convirtiendo el nombre a ID para el Backend
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await statsService.getDashboardStats(filters);
+      let provinceParam = filters.province;
+
+      // Si hay una provincia seleccionada, buscamos su ID real
+      if (filters.province !== "TODAS") {
+        const found = provincesList.find((p) => p.name === filters.province);
+        if (found) {
+          provinceParam = String(found.id);
+        }
+      }
+
+      // Llamamos al servicio pasando el ID (o "TODAS")
+      const data = await statsService.getDashboardStats({
+        ...filters,
+        province: provinceParam,
+      });
+      
       setStats(data);
     } catch (error) {
       console.error("Error cargando estadísticas:", error);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, provincesList]);
 
-  // Ejecutar cuando cambian los filtros
+  // Ejecutar fetch cuando cambian los filtros o se carga la lista de provincias
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
@@ -50,12 +64,13 @@ export const useDashboardStats = () => {
     // Validación de fechas
     if (key === "from" && filters.to && value > filters.to) {
       console.warn("La fecha 'desde' no puede ser posterior a 'hasta'");
-      return; // No actualizar si la validación falla
+      return;
     }
     if (key === "to" && filters.from && value < filters.from) {
       console.warn("La fecha 'hasta' no puede ser anterior a 'desde'");
-      return; // No actualizar si la validación falla
+      return;
     }
+
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -70,6 +85,6 @@ export const useDashboardStats = () => {
     provincesList,
     updateFilter,
     clearFilters,
-    refresh: fetchStats, // Útil si quieres agregar un botón de "Actualizar" manual
+    refresh: fetchStats,
   };
 };
